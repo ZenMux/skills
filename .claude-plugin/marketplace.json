@@ -1,0 +1,22 @@
+{
+  "name": "zenmux-skills",
+  "owner": {
+    "name": "ZenMux",
+    "url": "https://github.com/ZenMux"
+  },
+  "metadata": {
+    "description": "Official Claude Code skills for ZenMux",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "zenmux-context",
+      "description": "ZenMux documentation expert. Answers questions about product features, API usage, integration, configuration, and best practices by reading the latest official docs. Supports both English and Chinese.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/zenmux-context"
+      ]
+    }
+  ]
+}
