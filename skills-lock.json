@@ -5,6 +5,11 @@
       "source": "anthropics/skills",
       "sourceType": "github",
       "computedHash": "b122f4d1e91aa1d83027e050b5b37c3156203ee85458d7b1360bc48167c9e02a"
+    },
+    "zenmux-context": {
+      "source": "ZenMux/skills",
+      "sourceType": "github",
+      "computedHash": "ed5f3ea1e77c0bcf8e25cbdab9641003bec22fd2b8402cbb58dd26ea4f16699c"
     }
   }
 }
