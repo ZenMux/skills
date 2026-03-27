@@ -17,6 +17,15 @@
       "skills": [
         "./skills/zenmux-context"
       ]
+    },
+    {
+      "name": "zenmux-usage",
+      "description": "Query real-time ZenMux account data via the Management API: subscription detail, quota usage, account status, Flow rate, PAYG balance, and per-generation cost/token breakdown.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/zenmux-usage"
+      ]
     }
   ]
 }

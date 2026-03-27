@@ -11,7 +11,8 @@ npx skills add ZenMux/skills
 Install a single skill:
 
 ```bash
-npx skills add ZenMux/skills/zenmux-context
+npx skills add https://github.com/zenmux/skills --skill zenmux-context
+npx skills add https://github.com/zenmux/skills --skill zenmux-usage
 ```
 
 ## Available Skills
@@ -19,6 +20,7 @@ npx skills add ZenMux/skills/zenmux-context
 | Skill | Description |
 |-------|-------------|
 | **zenmux-context** | ZenMux documentation expert. Answers questions about product features, API usage, integration, configuration, and best practices by pulling the latest official docs and providing cited responses. Supports both English and Chinese. |
+| **zenmux-usage** | Query real-time ZenMux account data via the Management API: subscription detail, quota usage (5h/7d/monthly), account status, Flow rate, PAYG balance, and per-generation cost/token breakdown. |
 
 ## Repository Structure
 
@@ -30,6 +32,8 @@ skills/                          # Skills directory
   zenmux-context/                # ZenMux documentation skill
     SKILL.md                     # Skill definition
     scripts/get-doc-tree.sh      # Documentation tree generator
+  zenmux-usage/                  # ZenMux usage query skill
+    SKILL.md                     # Skill definition
 
 .context/references/             # Local reference docs (git ignored)
   references-list.txt            # External repository list
