@@ -2,9 +2,11 @@
 
 # Set variables
 REFERENCES_RELATIVE_PATH=".context/references"  # Path to references directory relative to project root
-REFERENCES_DIR=$(realpath "$(dirname "$0")/../$REFERENCES_RELATIVE_PATH")
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+REFERENCES_DIR="$PROJECT_ROOT/$REFERENCES_RELATIVE_PATH"
 REFERENCES_LIST="$REFERENCES_DIR/references-list.txt"
-GITIGNORE_FILE=$(realpath "$(dirname "$0")/../.gitignore")
+GITIGNORE_FILE="$PROJECT_ROOT/.gitignore"
 
 # Check if references directory exists, create if not
 if [ ! -d "$REFERENCES_DIR" ]; then
@@ -27,16 +29,16 @@ while IFS= read -r repo_url || [[ -n "$repo_url" ]]; do
   if [[ -z "$repo_url" || "$repo_url" =~ ^# ]]; then
     continue
   fi
-  
+
   echo "Processing repository: $repo_url"
-  
+
   # Extract repository name from URL
   repo_name=$(basename "$repo_url" .git)
   target_dir="$REFERENCES_DIR/$repo_name"
-  
+
   # Check if directory name is a path to be added to .gitignore
   gitignore_path="$REFERENCES_RELATIVE_PATH/$repo_name"
-  
+
   # Check if already in .gitignore
   if ! grep -q "^$gitignore_path\$" "$GITIGNORE_FILE"; then
     echo "Adding $gitignore_path to .gitignore..."
@@ -54,7 +56,7 @@ while IFS= read -r repo_url || [[ -n "$repo_url" ]]; do
   else
     echo "$gitignore_path is already in .gitignore"
   fi
-  
+
   # Check if directory exists
   if [ -d "$target_dir" ]; then
     # Directory exists, try to update
@@ -65,7 +67,7 @@ while IFS= read -r repo_url || [[ -n "$repo_url" ]]; do
     echo "Cloning $repo_name..."
     git clone "$repo_url" "$target_dir"
   fi
-  
+
 done < "$REFERENCES_LIST"
 
 echo "All reference projects processed!"

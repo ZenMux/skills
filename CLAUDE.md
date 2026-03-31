@@ -9,26 +9,25 @@ This is the ZenMux skills repository — a collection of Claude Code skills for 
 ## Architecture
 
 ```
-scripts/                     # Shared infrastructure scripts
-  update-references.sh       # Clones/pulls repos listed in references-list.txt
-
 skills/                      # Claude skills (each skill = a directory)
   zenmux-context/            # Documentation expert skill
     SKILL.md                 # Skill definition (YAML frontmatter + workflow)
     scripts/                 # Skill-specific scripts
+      update-references.sh   # Clones/pulls repos listed in references-list.txt
+      get-doc-tree.sh        # Generates documentation tree (titles + paths)
 
 .context/references/         # Git-ignored local clones of external repos
   references-list.txt        # One GitHub URL per line (source of truth)
   zenmux-doc/                # Cloned ZenMux documentation (bilingual: en/ + zh/)
 ```
 
-**Reference management pattern:** External repos are listed in `.context/references/references-list.txt` and cloned locally by `update-references.sh`. The cloned repos are git-ignored — they are runtime dependencies, not committed content.
+**Reference management pattern:** External repos are listed in `.context/references/references-list.txt` and cloned locally by `skills/zenmux-context/scripts/update-references.sh`. The cloned repos are git-ignored — they are runtime dependencies, not committed content.
 
 ## Key Commands
 
 ```bash
 # Pull/update all reference repositories
-bash scripts/update-references.sh
+bash skills/zenmux-context/scripts/update-references.sh
 
 # Generate the ZenMux documentation tree (titles + paths)
 bash skills/zenmux-context/scripts/get-doc-tree.sh

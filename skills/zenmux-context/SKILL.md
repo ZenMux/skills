@@ -31,7 +31,7 @@ ZenMux is an LLM API aggregation service that provides unified access to multipl
 Pull the latest documentation to ensure you have up-to-date content:
 
 ```bash
-bash scripts/update-references.sh
+bash skills/zenmux-context/scripts/update-references.sh
 ```
 
 If this fails due to network issues, proceed with the existing local copy. Mention to the user that the docs may not be the absolute latest version.
