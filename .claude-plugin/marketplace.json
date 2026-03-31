@@ -6,21 +6,22 @@
   },
   "metadata": {
     "description": "Official Claude Code skills for ZenMux",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "plugins": [
     {
-      "name": "zenmux-context",
-      "description": "ZenMux documentation expert. Answers questions about product features, API usage, integration, configuration, and best practices by reading the latest official docs. Supports both English and Chinese.",
+      "name": "zenmux-product",
+      "description": "ZenMux product knowledge and onboarding — answers questions about features, API, integration, pricing, and best practices from official docs, and interactively guides tool/SDK configuration step by step",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/zenmux-context"
+        "./skills/zenmux-context",
+        "./skills/zenmux-setup"
       ]
     },
     {
-      "name": "zenmux-usage",
-      "description": "Query real-time ZenMux account data via the Management API: subscription detail, quota usage, account status, Flow rate, PAYG balance, and per-generation cost/token breakdown.",
+      "name": "zenmux-management",
+      "description": "ZenMux account management tools — query real-time subscription detail, quota usage, PAYG balance, Flow rate, and per-generation cost via the Management API",
       "source": "./",
       "strict": false,
       "skills": [
