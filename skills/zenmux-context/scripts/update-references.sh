@@ -1,12 +1,14 @@
 #!/bin/bash
 
 # Set variables
-REFERENCES_RELATIVE_PATH=".context/references"  # Path to references directory relative to project root
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-REFERENCES_DIR="$PROJECT_ROOT/$REFERENCES_RELATIVE_PATH"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SKILL_DIR/../.." && pwd)"
+REFERENCES_DIR="$SKILL_DIR/references"
 REFERENCES_LIST="$REFERENCES_DIR/references-list.txt"
 GITIGNORE_FILE="$PROJECT_ROOT/.gitignore"
+# Path prefix for .gitignore entries (relative to project root)
+GITIGNORE_PREFIX="skills/zenmux-context/references"
 
 # Check if references directory exists, create if not
 if [ ! -d "$REFERENCES_DIR" ]; then
@@ -37,7 +39,7 @@ while IFS= read -r repo_url || [[ -n "$repo_url" ]]; do
   target_dir="$REFERENCES_DIR/$repo_name"
 
   # Check if directory name is a path to be added to .gitignore
-  gitignore_path="$REFERENCES_RELATIVE_PATH/$repo_name"
+  gitignore_path="$GITIGNORE_PREFIX/$repo_name"
 
   # Check if already in .gitignore
   if ! grep -q "^$gitignore_path\$" "$GITIGNORE_FILE"; then

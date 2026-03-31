@@ -15,13 +15,12 @@ skills/                      # Claude skills (each skill = a directory)
     scripts/                 # Skill-specific scripts
       update-references.sh   # Clones/pulls repos listed in references-list.txt
       get-doc-tree.sh        # Generates documentation tree (titles + paths)
-
-.context/references/         # Git-ignored local clones of external repos
-  references-list.txt        # One GitHub URL per line (source of truth)
-  zenmux-doc/                # Cloned ZenMux documentation (bilingual: en/ + zh/)
+    references/              # External repo clones (git-ignored)
+      references-list.txt    # One GitHub URL per line (source of truth)
+      zenmux-doc/            # Cloned ZenMux documentation (bilingual: en/ + zh/)
 ```
 
-**Reference management pattern:** External repos are listed in `.context/references/references-list.txt` and cloned locally by `skills/zenmux-context/scripts/update-references.sh`. The cloned repos are git-ignored — they are runtime dependencies, not committed content.
+**Reference management pattern:** External repos are listed in `skills/zenmux-context/references/references-list.txt` and cloned locally by `skills/zenmux-context/scripts/update-references.sh`. The cloned repos are git-ignored — they are runtime dependencies, not committed content.
 
 ## Key Commands
 
@@ -54,7 +53,7 @@ Skills can include a `scripts/` subdirectory for bash helpers. The SKILL.md body
 
 ## ZenMux Documentation Structure
 
-The documentation at `.context/references/zenmux-doc/docs_source/` is bilingual:
+The documentation at `skills/zenmux-context/references/zenmux-doc/docs_source/` is bilingual:
 - `en/` — English docs
 - `zh/` — Chinese docs (source-of-truth, translated to English)
 
@@ -66,4 +65,4 @@ Online docs: https://docs.zenmux.ai (English at root, Chinese under `/zh/`).
 
 1. Create `skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description`)
 2. Add any helper scripts in `skills/<skill-name>/scripts/` (make them executable)
-3. If the skill needs external repos, add URLs to `.context/references/references-list.txt`
+3. If the skill needs external repos, add URLs to the skill's `references/references-list.txt`

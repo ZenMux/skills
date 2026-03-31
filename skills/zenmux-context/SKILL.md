@@ -101,7 +101,7 @@ Based on the user's question, select 1-4 of the most relevant files to read. Use
 
 ## Step 4 — Read documentation and answer
 
-Read the selected files from `.context/references/zenmux-doc/docs_source/{en|zh}/`. Then:
+Read the selected files from `skills/zenmux-context/references/zenmux-doc/docs_source/{en|zh}/`. Then:
 
 1. **Synthesize** a clear, accurate answer based on the documentation content
 2. **Respond** in the same language the user used (Chinese question → Chinese answer)
