@@ -20,7 +20,27 @@ ZenMux is built in public — every piece of user feedback directly shapes the p
 
 ## Step 0: Sync references & check prerequisites (MUST run first)
 
-### 0a. Update issue templates from upstream
+### 0a. Verify GitHub CLI
+
+```bash
+gh --version 2>&1 && gh auth status 2>&1
+```
+
+**If `gh` is not installed** — stop the workflow and tell the user:
+
+1. This skill requires **GitHub CLI (`gh`)** to submit issues
+2. Install it:
+   - **macOS**: `brew install gh`
+   - **Linux**: `sudo apt install gh` or `sudo dnf install gh`
+   - **Windows**: `winget install --id GitHub.cli`
+   - **Other**: https://cli.github.com/
+3. Then run `gh auth login` to authenticate
+4. Mention that ZenMux uses structured issue templates — the user can browse them at `skills/zenmux-feedback/references/zenmux-doc/.github/ISSUE_TEMPLATE/` to preview the fields each issue type requires
+5. Do NOT proceed — wait for the user to install and authenticate first
+
+**If `gh` is installed but not authenticated** — tell the user to run `gh auth login`, then re-run this skill.
+
+### 0b. Update issue templates from upstream
 
 Run the update script to clone or pull the latest zenmux-doc repository:
 
@@ -28,37 +48,17 @@ Run the update script to clone or pull the latest zenmux-doc repository:
 bash skills/zenmux-feedback/scripts/update-references.sh
 ```
 
-Then read **all** issue template files under `skills/zenmux-feedback/references/zenmux-doc/.github/ISSUE_TEMPLATE/` to get the latest fields, dropdown options, and validation rules for each issue type. These templates are the source of truth — use them to compose the issue body in Step 3.
+Then read **all** `.yml` files under `skills/zenmux-feedback/references/zenmux-doc/.github/ISSUE_TEMPLATE/` to get the latest fields, dropdown options, and validation rules. These templates are the **source of truth** — if template fields have changed from what's described below, follow the templates.
 
-### 0b. Verify GitHub CLI
+### 0c. Fetch available repo labels
 
 ```bash
-gh --version 2>&1 && gh auth status 2>&1
+gh label list --repo ZenMux/zenmux-doc --limit 100
 ```
 
-### If `gh` is not installed
+Cache this list. In Step 5, **only apply labels that appear in this list**. If a label from the type mapping below doesn't exist in the repo, silently drop it — never pass non-existent labels to `gh issue create`.
 
-Stop the workflow and tell the user:
-
-1. This skill requires **GitHub CLI (`gh`)** to submit issues — inform the user clearly
-2. Provide installation instructions:
-   - **macOS**: `brew install gh`
-   - **Linux**: `sudo apt install gh` or `sudo dnf install gh`
-   - **Windows**: `winget install --id GitHub.cli`
-   - **Other**: https://cli.github.com/
-3. After installing, run `gh auth login` to authenticate with their GitHub account
-4. Mention that ZenMux uses structured issue templates — the user can browse them at `skills/zenmux-feedback/references/zenmux-doc/.github/ISSUE_TEMPLATE/` to preview the fields each issue type requires
-5. Do NOT proceed to gather info or compose issues — wait for the user to install and authenticate first
-
-### If `gh` is installed but not authenticated
-
-Tell the user to run:
-```bash
-gh auth login
-```
-Then re-run this skill once authenticated.
-
-### If both checks pass
+### If all checks pass
 
 Proceed to Step 1.
 
@@ -66,13 +66,15 @@ Proceed to Step 1.
 
 From the user's message, determine which type fits:
 
-| Type | Signals | Title prefix | Labels |
-|------|---------|-------------|--------|
-| **Bug Report** | Something broken, errors, unexpected behavior | `[Bug]: ` | `bug, needs-triage` |
-| **Feature Request** | Wants new functionality or improvements | `[Feature]: ` | `enhancement, needs-triage` |
-| **Provider/Model Request** | Wants a new LLM provider or model | `[Provider]: ` | `provider-request, needs-triage` |
-| **Doc Feedback** | Doc errors, missing content, broken links | `[Docs]: ` | `documentation, needs-triage` |
-| **General Feedback** | Impressions, experience, suggestions, comparisons | `[Feedback]: ` | `feedback, community` |
+| Type | Signals | Title prefix | Labels (apply only if they exist in repo) |
+|------|---------|-------------|------------------------------------------|
+| **Bug Report** | Something broken, errors, unexpected behavior | `[Bug]: ` | `bug` |
+| **Feature Request** | Wants new functionality or improvements | `[Feature]: ` | `enhancement` |
+| **Provider/Model Request** | Wants a new LLM provider or model | `[Provider]: ` | `enhancement` |
+| **Doc Feedback** | Doc errors, missing content, broken links | `[Docs]: ` | `documentation` |
+| **General Feedback** | Impressions, experience, suggestions, comparisons | `[Feedback]: ` | `enhancement` |
+
+> **Note:** The upstream issue templates define additional labels (`needs-triage`, `provider-request`, `feedback`, `community`) that may not yet exist in the repo. The label list fetched in Step 0c is authoritative — only use labels confirmed to exist.
 
 Usually you can infer the type. Examples:
 - "API returns 500 when streaming" → Bug Report
@@ -264,7 +266,7 @@ Never submit without explicit confirmation.
 
 ## Step 5: Submit
 
-Since `gh` was verified in Step 0, write the body to a temp file and submit:
+Since `gh` was verified in Step 0, write the body to a temp file and submit. **Before submitting, cross-check labels against the list fetched in Step 0c — only include labels that actually exist in the repo.** If none of the desired labels exist, omit the `--label` flag entirely.
 
 ```bash
 # Write body to temp file to avoid shell escaping issues
@@ -276,10 +278,10 @@ gh issue create \
   --repo ZenMux/zenmux-doc \
   --title "[Type]: Title" \
   --body-file /tmp/zenmux-issue-body.md \
-  --label "label1,label2"
+  --label "label1"
 ```
 
-After success, show the issue URL and clean up the temp file.
+After success, show the issue URL and clean up the temp file (`rm /tmp/zenmux-issue-body.md`).
 
 ## Step 6: After submission
 
