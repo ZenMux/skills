@@ -11,12 +11,13 @@
   "plugins": [
     {
       "name": "zenmux-product",
-      "description": "ZenMux product knowledge and onboarding — answers questions about features, API, integration, pricing, and best practices from official docs, and interactively guides tool/SDK configuration step by step",
+      "description": "ZenMux product knowledge, onboarding, and feedback — answers questions about features, API, integration, pricing, and best practices from official docs, interactively guides tool/SDK configuration, and helps submit issues, feature requests, and product suggestions to GitHub",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/zenmux-context",
-        "./skills/zenmux-setup"
+        "./skills/zenmux-setup",
+        "./skills/zenmux-feedback"
       ]
     },
     {
@@ -26,15 +27,6 @@
       "strict": false,
       "skills": [
         "./skills/zenmux-usage"
-      ]
-    },
-    {
-      "name": "zenmux-feedback",
-      "description": "Submit GitHub issues, feature requests, bug reports, product suggestions, and feedback to ZenMux — gathers info conversationally and submits via gh CLI",
-      "source": "./",
-      "strict": false,
-      "skills": [
-        "./skills/zenmux-feedback"
       ]
     }
   ]
