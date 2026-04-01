@@ -27,6 +27,15 @@
       "skills": [
         "./skills/zenmux-usage"
       ]
+    },
+    {
+      "name": "zenmux-feedback",
+      "description": "Submit GitHub issues, feature requests, bug reports, product suggestions, and feedback to ZenMux — gathers info conversationally and submits via gh CLI",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/zenmux-feedback"
+      ]
     }
   ]
 }
