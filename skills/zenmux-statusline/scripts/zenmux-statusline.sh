@@ -158,12 +158,33 @@ if [ -n "$PAYG_TOTAL" ] && [ "$PAYG_TOTAL" != "null" ]; then
     PAYG_PART=" ${DIM}|${RESET} 💳 Bal ${GREEN}${BOLD}${PAYG_FMT}${RESET}"
 fi
 
+# ── API Key type + masked display ────────────────────────────────────
+KEY_PART=""
+if [ -n "$ZENMUX_API_KEY" ]; then
+    KEY_RAW="$ZENMUX_API_KEY"
+    # Extract prefix (e.g. sk-ss-v1 or sk-ai-v1) and last 3 chars
+    KEY_PREFIX=$(echo "$KEY_RAW" | grep -oE '^sk-[a-z]+-v[0-9]+' || echo "")
+    KEY_SUFFIX="${KEY_RAW: -3}"
+    if [ -n "$KEY_PREFIX" ]; then
+        KEY_MASKED="${KEY_PREFIX}-${KEY_RAW:${#KEY_PREFIX}+1:3}...${KEY_SUFFIX}"
+    else
+        KEY_MASKED="${KEY_RAW:0:6}...${KEY_SUFFIX}"
+    fi
+    # Determine key type: sk-ss-v1 = Subscription, sk-ai-v1 = PAYG
+    case "$KEY_RAW" in
+        sk-ss-v1-*) KEY_TYPE="Sub"  ; KEY_TYPE_COLOR="$CYAN" ;;
+        sk-ai-v1-*) KEY_TYPE="PAYG" ; KEY_TYPE_COLOR="$YELLOW" ;;
+        *)          KEY_TYPE="Key"  ; KEY_TYPE_COLOR="$DIM" ;;
+    esac
+    KEY_PART=" ${DIM}|${RESET} 🔑 ${KEY_TYPE_COLOR}${KEY_TYPE}${RESET} ${DIM}${KEY_MASKED}${RESET}"
+fi
+
 # ── Status indicator ─────────────────────────────────────────────────
 if [ "$STATUS" = "healthy" ]; then
-    STATUS_PART="${MAGENTA}${BOLD}⚡ ${PLAN}${RESET}"
+    STATUS_PART="${MAGENTA}${BOLD}⚡ ZenMux ${PLAN}${RESET}"
 else
-    STATUS_PART="${RED}${BOLD}⚠ ${PLAN}${RESET}"
+    STATUS_PART="${RED}${BOLD}⚡ ZenMux ${PLAN} ⚠${RESET}"
 fi
 
 # ── Line 2: ZenMux account info ─────────────────────────────────────
-printf '%b' "${STATUS_PART} ${DIM}|${RESET} 5h ${FIVE_BAR} ${FIVE_H_PCT_INT}% ${DIM}·${RESET} 7d ${SEVEN_BAR} ${SEVEN_D_PCT_INT}%${PAYG_PART}\n"
+printf '%b' "${STATUS_PART}${KEY_PART} ${DIM}|${RESET} 5h ${FIVE_BAR} ${FIVE_H_PCT_INT}% ${DIM}·${RESET} 7d ${SEVEN_BAR} ${SEVEN_D_PCT_INT}%${PAYG_PART}\n"
