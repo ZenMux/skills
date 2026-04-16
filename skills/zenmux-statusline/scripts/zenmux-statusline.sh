@@ -16,32 +16,74 @@ DIM='\033[2m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
+# ── Helpers ──────────────────────────────────────────────────────────
+# Format large numbers: 856 → "856", 15234 → "15.2k", 1523400 → "1.5M"
+fmt_num() {
+    local n=${1:-0}
+    if [ "$n" -ge 1000000 ] 2>/dev/null; then
+        awk "BEGIN{printf \"%.1fM\", $n/1000000}"
+    elif [ "$n" -ge 1000 ] 2>/dev/null; then
+        awk "BEGIN{printf \"%.1fk\", $n/1000}"
+    else
+        echo "$n"
+    fi
+}
+
+# Format milliseconds → "2m15s" or "45s"
+fmt_duration() {
+    local ms=${1:-0}
+    local mins=$(( ms / 60000 ))
+    local secs=$(( (ms % 60000) / 1000 ))
+    if [ "$mins" -gt 0 ]; then
+        echo "${mins}m${secs}s"
+    else
+        echo "${secs}s"
+    fi
+}
+
 # ── Read Claude Code session data from stdin ─────────────────────────
 input=$(cat)
 
-MODEL=$(echo "$input" | jq -r '.model.display_name // "?"')
+MODEL_NAME=$(echo "$input" | jq -r '.model.display_name // "?"')
+MODEL_ID=$(echo "$input" | jq -r '.model.id // ""')
 DIR=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
 USED_PCT=$(echo "$input" | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
 DURATION_MS=$(echo "$input" | jq -r '.cost.total_duration_ms // 0')
+API_DURATION_MS=$(echo "$input" | jq -r '.cost.total_api_duration_ms // 0')
+LINES_ADDED=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
+LINES_REMOVED=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
+INPUT_TOKENS=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
+OUTPUT_TOKENS=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
 
-# ── Context remaining bar (inverted: full bar = plenty of room) ──────
-REMAIN_PCT=$(( 100 - USED_PCT ))
-[ "$REMAIN_PCT" -lt 0 ] && REMAIN_PCT=0
+# current_usage: token breakdown from the last API call (null before first call)
+CACHE_READ=$(echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // 0')
+CACHE_WRITE=$(echo "$input" | jq -r '.context_window.current_usage.cache_creation_input_tokens // 0')
 
-if [ "$REMAIN_PCT" -le 10 ] 2>/dev/null; then CTX_COLOR="$RED"
-elif [ "$REMAIN_PCT" -le 30 ] 2>/dev/null; then CTX_COLOR="$YELLOW"
+# ── Context used bar ────────────────────────────────────────────────
+if [ "$USED_PCT" -ge 90 ] 2>/dev/null; then CTX_COLOR="$RED"
+elif [ "$USED_PCT" -ge 70 ] 2>/dev/null; then CTX_COLOR="$YELLOW"
 else CTX_COLOR="$GREEN"; fi
 
 BAR_WIDTH=10
-CTX_FILLED=$(( REMAIN_PCT * BAR_WIDTH / 100 ))
+CTX_FILLED=$(( USED_PCT * BAR_WIDTH / 100 ))
 CTX_EMPTY=$(( BAR_WIDTH - CTX_FILLED ))
 CTX_BAR=""
 [ "$CTX_FILLED" -gt 0 ] && printf -v FILL "%${CTX_FILLED}s" && CTX_BAR="${FILL// /█}"
 [ "$CTX_EMPTY" -gt 0 ] && printf -v PAD "%${CTX_EMPTY}s" && CTX_BAR="${CTX_BAR}${PAD// /░}"
 
-# ── Duration formatting ──────────────────────────────────────────────
-MINS=$(( DURATION_MS / 60000 ))
-SECS=$(( (DURATION_MS % 60000) / 1000 ))
+# ── Format session metrics ───────────────────────────────────────────
+TOTAL_DUR=$(fmt_duration "$DURATION_MS")
+API_DUR=$(fmt_duration "$API_DURATION_MS")
+IN_TOK=$(fmt_num "$INPUT_TOKENS")
+OUT_TOK=$(fmt_num "$OUTPUT_TOKENS")
+C_READ=$(fmt_num "$CACHE_READ")
+C_WRITE=$(fmt_num "$CACHE_WRITE")
+
+# Cache section: only show when current_usage is available (after first API call)
+CACHE_PART=""
+if [ "$CACHE_READ" -gt 0 ] 2>/dev/null || [ "$CACHE_WRITE" -gt 0 ] 2>/dev/null; then
+    CACHE_PART=" ${DIM}|${RESET} 💾 ${DIM}r${RESET}${C_READ} ${DIM}w${RESET}${C_WRITE}"
+fi
 
 # ── Git branch (cached per session, 5s TTL) ─────────────────────────
 SESSION_ID=$(echo "$input" | jq -r '.session_id // "default"')
@@ -72,7 +114,11 @@ GIT_INFO=$(cat "$GIT_CACHE" 2>/dev/null || echo "")
 GIT_PART=""
 [ -n "$GIT_INFO" ] && GIT_PART=" ${DIM}|${RESET} 🌿 ${GIT_INFO}"
 
-printf '%b' "${CYAN}${BOLD}[${MODEL}]${RESET} 📁 ${DIR##*/}${GIT_PART} ${DIM}|${RESET} ctx ${CTX_COLOR}${CTX_BAR}${RESET} ${REMAIN_PCT}% ${DIM}|${RESET} ⏱ ${MINS}m${SECS}s\n"
+# Model id shown dimmed after display name
+MODEL_ID_PART=""
+[ -n "$MODEL_ID" ] && MODEL_ID_PART=" ${DIM}${MODEL_ID}${RESET}"
+
+printf '%b' "${CYAN}${BOLD}[${MODEL_NAME}]${RESET}${MODEL_ID_PART} 📁 ${DIR##*/}${GIT_PART} ${DIM}|${RESET} ${CTX_COLOR}${CTX_BAR}${RESET} ${USED_PCT}% ctx ${DIM}|${RESET} ${DIM}↑${RESET}${IN_TOK} ${DIM}↓${RESET}${OUT_TOK}${CACHE_PART} ${DIM}|${RESET} ${GREEN}+${LINES_ADDED}${RESET} ${RED}-${LINES_REMOVED}${RESET} ${DIM}|${RESET} ⏱ ${TOTAL_DUR} ${DIM}⚙${RESET}${API_DUR}\n"
 
 # ── ZenMux account data (Line 2) ────────────────────────────────────
 # If management key is not set, show a setup hint
