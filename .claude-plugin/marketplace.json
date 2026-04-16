@@ -26,7 +26,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/zenmux-usage"
+        "./skills/zenmux-usage",
+        "./skills/zenmux-statusline"
       ]
     }
   ]
