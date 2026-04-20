@@ -41,6 +41,32 @@ fmt_duration() {
     fi
 }
 
+# Format ISO 8601 UTC timestamp → "Xh Ym" or "Xm" from now
+fmt_time_until() {
+    local iso_ts=$1
+    [ -z "$iso_ts" ] || [ "$iso_ts" = "null" ] && return 1
+    local clean_ts
+    clean_ts=$(echo "$iso_ts" | sed 's/\.[0-9]*Z$//' | sed 's/Z$//')
+    local now target
+    now=$(date -u +%s)
+    if target=$(date -j -u -f "%Y-%m-%dT%H:%M:%S" "$clean_ts" +%s 2>/dev/null); then
+        :
+    elif target=$(date -u -d "$iso_ts" +%s 2>/dev/null); then
+        :
+    else
+        return 1
+    fi
+    local diff=$(( target - now ))
+    [ "$diff" -le 0 ] && echo "soon" && return 0
+    local hours=$(( diff / 3600 ))
+    local mins=$(( (diff % 3600) / 60 ))
+    if [ "$hours" -gt 0 ]; then
+        echo "${hours}h${mins}m"
+    else
+        echo "${mins}m"
+    fi
+}
+
 # ── Read Claude Code session data from stdin ─────────────────────────
 input=$(cat)
 
@@ -195,6 +221,13 @@ make_usage_bar() {
 FIVE_BAR=$(make_usage_bar "$FIVE_H_PCT_INT")
 SEVEN_BAR=$(make_usage_bar "$SEVEN_D_PCT_INT")
 
+# ── 5-hour quota reset countdown (shown when fully used) ────────────
+FIVE_H_RESET_PART=""
+FIVE_H_RESETS_AT=$(echo "$CACHED" | jq -r '.sub.data.quota_5_hour.resets_at // "null"')
+if [ "$FIVE_H_PCT_INT" -ge 100 ] 2>/dev/null && FIVE_H_ETA=$(fmt_time_until "$FIVE_H_RESETS_AT"); then
+    FIVE_H_RESET_PART=" ${YELLOW}⏳ ${FIVE_H_ETA}${RESET}"
+fi
+
 # ── Parse PAYG wallet balance ────────────────────────────────────────
 PAYG_TOTAL=$(echo "$CACHED" | jq -r '.payg.data.total_credits // empty')
 PAYG_PART=""
@@ -233,4 +266,4 @@ else
 fi
 
 # ── Line 2: ZenMux account info ─────────────────────────────────────
-printf '%b' "${STATUS_PART}${KEY_PART} ${DIM}|${RESET} 5h ${FIVE_BAR} ${FIVE_H_PCT_INT}% ${DIM}·${RESET} 7d ${SEVEN_BAR} ${SEVEN_D_PCT_INT}%${PAYG_PART}\n"
+printf '%b' "${STATUS_PART}${KEY_PART} ${DIM}|${RESET} 5h ${FIVE_BAR} ${FIVE_H_PCT_INT}%${FIVE_H_RESET_PART} ${DIM}·${RESET} 7d ${SEVEN_BAR} ${SEVEN_D_PCT_INT}%${PAYG_PART}\n"
