@@ -63,8 +63,6 @@ DIR=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
 USED_PCT=$(echo "$input" | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
 DURATION_MS=$(echo "$input" | jq -r '.cost.total_duration_ms // 0')
 API_DURATION_MS=$(echo "$input" | jq -r '.cost.total_api_duration_ms // 0')
-LINES_ADDED=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
-LINES_REMOVED=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
 
 # ── Context used bar ────────────────────────────────────────────────
 if [ "$USED_PCT" -ge 90 ] 2>/dev/null; then CTX_COLOR="$RED"
@@ -111,7 +109,7 @@ GIT_INFO=$(cat "$GIT_CACHE" 2>/dev/null || echo "")
 GIT_PART=""
 [ -n "$GIT_INFO" ] && GIT_PART=" ${DIM}|${RESET} 🌿 ${GIT_INFO}"
 
-printf '%b' "${CYAN}${BOLD}[${MODEL_NAME}]${RESET} 📁 ${DIR##*/}${GIT_PART} ${DIM}|${RESET} ${CTX_COLOR}${CTX_BAR}${RESET} ${USED_PCT}% ctx ${DIM}|${RESET} ${GREEN}+${LINES_ADDED}${RESET} ${RED}-${LINES_REMOVED}${RESET} ${DIM}|${RESET} ⏱ ${TOTAL_DUR} ${DIM}⚙${RESET}${API_DUR}\n"
+printf '%b' "${CYAN}${BOLD}[${MODEL_NAME}]${RESET} 📁 ${DIR##*/}${GIT_PART} ${DIM}|${RESET} ${CTX_COLOR}${CTX_BAR}${RESET} ${USED_PCT}% ctx ${DIM}|${RESET} ⏱ ${TOTAL_DUR} ${DIM}⚙${RESET}${API_DUR}\n"
 
 # ── ZenMux account data (Line 2) ────────────────────────────────────
 # If management key is not set, show a setup hint
