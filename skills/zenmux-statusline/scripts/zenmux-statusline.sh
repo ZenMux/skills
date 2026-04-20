@@ -109,7 +109,7 @@ GIT_INFO=$(cat "$GIT_CACHE" 2>/dev/null || echo "")
 GIT_PART=""
 [ -n "$GIT_INFO" ] && GIT_PART=" ${DIM}|${RESET} 🌿 ${GIT_INFO}"
 
-printf '%b' "${CYAN}${BOLD}[${MODEL_NAME}]${RESET} 📁 ${DIR##*/}${GIT_PART} ${DIM}|${RESET} ${CTX_COLOR}${CTX_BAR}${RESET} ${USED_PCT}% ctx ${DIM}|${RESET} ⏱ ${TOTAL_DUR} ${DIM}⚙${RESET}${API_DUR}\n"
+printf '%b' "${CYAN}${BOLD}[${MODEL_NAME}]${RESET} 📁 ${DIR##*/}${GIT_PART} ${DIM}|${RESET} ${CTX_COLOR}${CTX_BAR}${RESET} ${USED_PCT}% ctx ${DIM}|${RESET} ⏱ ${TOTAL_DUR} ${DIM}⚙${RESET} ${API_DUR}\n"
 
 # ── ZenMux account data (Line 2) ────────────────────────────────────
 # If management key is not set, show a setup hint
