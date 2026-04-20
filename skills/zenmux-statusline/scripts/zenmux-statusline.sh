@@ -193,6 +193,12 @@ if [ "$FIVE_H_PCT_INT" -ge 100 ] 2>/dev/null && FIVE_H_ETA=$(fmt_time_until "$FI
     FIVE_H_RESET_PART=" ${YELLOW}⏳ ${FIVE_H_ETA}${RESET}"
 fi
 
+SEVEN_D_RESET_PART=""
+SEVEN_D_RESETS_AT=$(echo "$CACHED" | jq -r '.sub.data.quota_7_day.resets_at // "null"')
+if [ "$SEVEN_D_PCT_INT" -ge 100 ] 2>/dev/null && SEVEN_D_ETA=$(fmt_time_until "$SEVEN_D_RESETS_AT"); then
+    SEVEN_D_RESET_PART=" ${YELLOW}⏳ ${SEVEN_D_ETA}${RESET}"
+fi
+
 # ── Parse PAYG wallet balance ────────────────────────────────────────
 PAYG_TOTAL=$(echo "$CACHED" | jq -r '.payg.data.total_credits // empty')
 PAYG_PART=""
@@ -231,4 +237,4 @@ else
 fi
 
 # ── Line 2: ZenMux account info ─────────────────────────────────────
-printf '%b' "${STATUS_PART}${KEY_PART} ${DIM}|${RESET} 5h ${FIVE_BAR} ${FIVE_H_PCT_INT}%${FIVE_H_RESET_PART} ${DIM}·${RESET} 7d ${SEVEN_BAR} ${SEVEN_D_PCT_INT}%${PAYG_PART}\n"
+printf '%b' "${STATUS_PART}${KEY_PART} ${DIM}|${RESET} 5h ${FIVE_BAR} ${FIVE_H_PCT_INT}%${FIVE_H_RESET_PART} ${DIM}·${RESET} 7d ${SEVEN_BAR} ${SEVEN_D_PCT_INT}%${SEVEN_D_RESET_PART}${PAYG_PART}\n"
