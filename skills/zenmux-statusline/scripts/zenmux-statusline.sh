@@ -17,18 +17,6 @@ BOLD='\033[1m'
 RESET='\033[0m'
 
 # ── Helpers ──────────────────────────────────────────────────────────
-# Format large numbers: 856 → "856", 15234 → "15.2k", 1523400 → "1.5M"
-fmt_num() {
-    local n=${1:-0}
-    if [ "$n" -ge 1000000 ] 2>/dev/null; then
-        awk "BEGIN{printf \"%.1fM\", $n/1000000}"
-    elif [ "$n" -ge 1000 ] 2>/dev/null; then
-        awk "BEGIN{printf \"%.1fk\", $n/1000}"
-    else
-        echo "$n"
-    fi
-}
-
 # Format milliseconds → "2m15s" or "45s"
 fmt_duration() {
     local ms=${1:-0}
@@ -41,23 +29,40 @@ fmt_duration() {
     fi
 }
 
+# Format ISO 8601 UTC timestamp → "Xh Ym" or "Xm" from now
+fmt_time_until() {
+    local iso_ts=$1
+    [ -z "$iso_ts" ] || [ "$iso_ts" = "null" ] && return 1
+    local clean_ts
+    clean_ts=$(echo "$iso_ts" | sed 's/\.[0-9]*Z$//' | sed 's/Z$//')
+    local now target
+    now=$(date -u +%s)
+    if target=$(date -j -u -f "%Y-%m-%dT%H:%M:%S" "$clean_ts" +%s 2>/dev/null); then
+        :
+    elif target=$(date -u -d "$iso_ts" +%s 2>/dev/null); then
+        :
+    else
+        return 1
+    fi
+    local diff=$(( target - now ))
+    [ "$diff" -le 0 ] && echo "soon" && return 0
+    local hours=$(( diff / 3600 ))
+    local mins=$(( (diff % 3600) / 60 ))
+    if [ "$hours" -gt 0 ]; then
+        echo "${hours}h${mins}m"
+    else
+        echo "${mins}m"
+    fi
+}
+
 # ── Read Claude Code session data from stdin ─────────────────────────
 input=$(cat)
 
 MODEL_NAME=$(echo "$input" | jq -r '.model.display_name // "?"')
-MODEL_ID=$(echo "$input" | jq -r '.model.id // ""')
 DIR=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
 USED_PCT=$(echo "$input" | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
 DURATION_MS=$(echo "$input" | jq -r '.cost.total_duration_ms // 0')
 API_DURATION_MS=$(echo "$input" | jq -r '.cost.total_api_duration_ms // 0')
-LINES_ADDED=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
-LINES_REMOVED=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
-INPUT_TOKENS=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
-OUTPUT_TOKENS=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
-
-# current_usage: token breakdown from the last API call (null before first call)
-CACHE_READ=$(echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // 0')
-CACHE_WRITE=$(echo "$input" | jq -r '.context_window.current_usage.cache_creation_input_tokens // 0')
 
 # ── Context used bar ────────────────────────────────────────────────
 if [ "$USED_PCT" -ge 90 ] 2>/dev/null; then CTX_COLOR="$RED"
@@ -74,16 +79,6 @@ CTX_BAR=""
 # ── Format session metrics ───────────────────────────────────────────
 TOTAL_DUR=$(fmt_duration "$DURATION_MS")
 API_DUR=$(fmt_duration "$API_DURATION_MS")
-IN_TOK=$(fmt_num "$INPUT_TOKENS")
-OUT_TOK=$(fmt_num "$OUTPUT_TOKENS")
-C_READ=$(fmt_num "$CACHE_READ")
-C_WRITE=$(fmt_num "$CACHE_WRITE")
-
-# Cache section: only show when current_usage is available (after first API call)
-CACHE_PART=""
-if [ "$CACHE_READ" -gt 0 ] 2>/dev/null || [ "$CACHE_WRITE" -gt 0 ] 2>/dev/null; then
-    CACHE_PART=" ${DIM}|${RESET} 💾 ${DIM}r${RESET}${C_READ} ${DIM}w${RESET}${C_WRITE}"
-fi
 
 # ── Git branch (cached per session, 5s TTL) ─────────────────────────
 SESSION_ID=$(echo "$input" | jq -r '.session_id // "default"')
@@ -114,11 +109,7 @@ GIT_INFO=$(cat "$GIT_CACHE" 2>/dev/null || echo "")
 GIT_PART=""
 [ -n "$GIT_INFO" ] && GIT_PART=" ${DIM}|${RESET} 🌿 ${GIT_INFO}"
 
-# Model id shown dimmed after display name
-MODEL_ID_PART=""
-[ -n "$MODEL_ID" ] && MODEL_ID_PART=" ${DIM}${MODEL_ID}${RESET}"
-
-printf '%b' "${CYAN}${BOLD}[${MODEL_NAME}]${RESET}${MODEL_ID_PART} 📁 ${DIR##*/}${GIT_PART} ${DIM}|${RESET} ${CTX_COLOR}${CTX_BAR}${RESET} ${USED_PCT}% ctx ${DIM}|${RESET} ${DIM}↑${RESET}${IN_TOK} ${DIM}↓${RESET}${OUT_TOK}${CACHE_PART} ${DIM}|${RESET} ${GREEN}+${LINES_ADDED}${RESET} ${RED}-${LINES_REMOVED}${RESET} ${DIM}|${RESET} ⏱ ${TOTAL_DUR} ${DIM}⚙${RESET}${API_DUR}\n"
+printf '%b' "${CYAN}${BOLD}[${MODEL_NAME}]${RESET} 📁 ${DIR##*/}${GIT_PART} ${DIM}|${RESET} ${CTX_COLOR}${CTX_BAR}${RESET} ${USED_PCT}% ctx ${DIM}|${RESET} ⏱ ${TOTAL_DUR} ${DIM}⚙${RESET} ${API_DUR}\n"
 
 # ── ZenMux account data (Line 2) ────────────────────────────────────
 # If management key is not set, show a setup hint
@@ -195,6 +186,13 @@ make_usage_bar() {
 FIVE_BAR=$(make_usage_bar "$FIVE_H_PCT_INT")
 SEVEN_BAR=$(make_usage_bar "$SEVEN_D_PCT_INT")
 
+# ── 5-hour quota reset countdown (shown when fully used) ────────────
+FIVE_H_RESET_PART=""
+FIVE_H_RESETS_AT=$(echo "$CACHED" | jq -r '.sub.data.quota_5_hour.resets_at // "null"')
+if [ "$FIVE_H_PCT_INT" -ge 100 ] 2>/dev/null && FIVE_H_ETA=$(fmt_time_until "$FIVE_H_RESETS_AT"); then
+    FIVE_H_RESET_PART=" ${YELLOW}⏳ ${FIVE_H_ETA}${RESET}"
+fi
+
 # ── Parse PAYG wallet balance ────────────────────────────────────────
 PAYG_TOTAL=$(echo "$CACHED" | jq -r '.payg.data.total_credits // empty')
 PAYG_PART=""
@@ -233,4 +231,4 @@ else
 fi
 
 # ── Line 2: ZenMux account info ─────────────────────────────────────
-printf '%b' "${STATUS_PART}${KEY_PART} ${DIM}|${RESET} 5h ${FIVE_BAR} ${FIVE_H_PCT_INT}% ${DIM}·${RESET} 7d ${SEVEN_BAR} ${SEVEN_D_PCT_INT}%${PAYG_PART}\n"
+printf '%b' "${STATUS_PART}${KEY_PART} ${DIM}|${RESET} 5h ${FIVE_BAR} ${FIVE_H_PCT_INT}%${FIVE_H_RESET_PART} ${DIM}·${RESET} 7d ${SEVEN_BAR} ${SEVEN_D_PCT_INT}%${PAYG_PART}\n"
