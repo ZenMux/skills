@@ -4,7 +4,7 @@ description: >-
   Install and configure a Claude Code status line that displays real-time ZenMux account
   information: subscription tier, 5-hour and 7-day quota usage with color-coded progress
   bars, and PAYG wallet balance, alongside standard session info (model, git, context
-  remaining). Trigger on: "status line", "statusline", "set up status bar", "show ZenMux in
+  usage, prompt cache). Trigger on: "status line", "statusline", "set up status bar", "show ZenMux in
   status bar", "install ZenMux statusline", "configure status line with ZenMux",
   "状态栏", "配置状态栏", "安装状态栏", "在状态栏显示ZenMux信息".
   Activate when user wants to SET UP, INSTALL, CONFIGURE, or CUSTOMIZE a Claude Code
@@ -20,8 +20,8 @@ You are installing a Claude Code status line that displays real-time ZenMux acco
 The status line script is bundled at `scripts/zenmux-statusline.sh` relative to this skill. It produces a two-line display:
 
 ```
-Line 1: [Model] 📁 dir | 🌿 branch | ctx █████░░░░░ 58% | ⏱ 2m15s
-Line 2: ⚡ Ultra | 5h ░░░░░ 5% · 7d ░░░░░ 0% | 💳 Bal $492.74
+Line 1: [model-slug] 📁 dir | 🌿 branch | █████░░░░░ 58% ctx | 💾 r72.0k w5.0k
+Line 2: ⚡ Ultra | 🔑 Sub sk-ss-...6e6 | 5h █░░░░ 19% · 7d █░░░░ 24% | 💳 Bal $492.74
 ```
 
 If `ZENMUX_MANAGEMENT_KEY` is not set, Line 2 shows a setup hint instead:
@@ -116,7 +116,7 @@ Use the Edit tool to update the settings file. Be careful to preserve the existi
 Test the script with mock input to confirm it runs without errors:
 
 ```bash
-echo '{"model":{"display_name":"Test"},"workspace":{"current_dir":"'$(pwd)'"},"cost":{"total_cost_usd":0,"total_duration_ms":0},"context_window":{"used_percentage":0},"session_id":"verify-install"}' | sh ~/.claude/zenmux-statusline.sh
+echo '{"model":{"id":"test-model"},"workspace":{"current_dir":"'$(pwd)'"},"context_window":{"used_percentage":0},"session_id":"verify-install"}' | sh ~/.claude/zenmux-statusline.sh
 ```
 
 If output appears (at least one line), the installation is successful.
@@ -126,11 +126,11 @@ Tell the user:
 > Status line installed. It will appear at the bottom of Claude Code on your next interaction.
 >
 > **What it shows:**
-> - **Line 1**: Model, directory, git branch, context remaining bar, session duration
-> - **Line 2**: ZenMux plan tier, 5-hour and 7-day quota usage with color-coded bars, PAYG wallet balance
+> - **Line 1**: Model slug, directory, git branch, context used bar, last-call prompt cache read/write
+> - **Line 2**: ZenMux plan tier, API key type + masked key, 5-hour and 7-day quota usage with color-coded bars, PAYG wallet balance
 >
 > **Colors**:
-> - Context remaining: Green (>30%), yellow (10–30%), red (<10%)
+> - Context used: Green (<70%), yellow (70–89%), red (90%+)
 > - Quota usage: Green (<70%), yellow (70–89%), red (90%+)
 >
 > **Caching**: ZenMux API data is cached for 120 seconds to keep the status line fast. Git data is cached for 5 seconds.

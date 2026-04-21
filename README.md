@@ -26,38 +26,35 @@ npx skills add https://github.com/zenmux/skills --skill zenmux-statusline
 | **zenmux-setup** | Interactive onboarding guide. Walks users through configuring ZenMux with their tool or SDK step by step. |
 | **zenmux-usage** | Query real-time ZenMux account data via the Management API: subscription detail, quota usage (5h/7d/monthly), account status, Flow rate, PAYG balance, and per-generation cost/token breakdown. |
 | **zenmux-feedback** | Submit GitHub issues, feature requests, bug reports, product suggestions, and feedback to ZenMux. Gathers info conversationally and submits via `gh` CLI. |
-| **zenmux-statusline** | Install a Claude Code status line that displays real-time ZenMux account info (subscription tier, 5h/7d quota usage, PAYG wallet balance, API key type) alongside session metrics (model, context usage, tokens, cache hits, lines changed, duration). |
+| **zenmux-statusline** | Install a Claude Code status line that displays real-time ZenMux account info (subscription tier, 5h/7d quota usage, PAYG wallet balance, API key type) alongside session metrics (model, context usage, prompt cache hits). |
 
 ## zenmux-statusline
 
 A two-line status bar displayed at the bottom of Claude Code, combining session metrics with ZenMux account data.
 
 ```
-[Opus 4.6] claude-opus-4-6 📁 skills | 🌿 main* | ████░░░░░░ 42% ctx | ↑152.3k ↓45.2k | 💾 r72.0k w5.0k | +156 -23 | ⏱ 2m15s ⚙45s
-⚡ ZenMux Ultra | 🔑 Sub sk-ss-v1-5f8...6e6 | 5h ░░░░░ 5% · 7d ░░░░░ 1% | 💳 Bal $492.74
+[claude-opus-4-7[1m]] 📁 skills | 🌿 main* | ████░░░░░░ 42% ctx | 💾 r72.0k w5.0k
+⚡ ZenMux Ultra | 🔑 Sub sk-ss-...6e6 | 5h █░░░░ 19% · 7d █░░░░ 24% | 💳 Bal $492.74
 ```
 
 ### Line 1 — Session Info
 
 | Segment | Example | Description |
 |---------|---------|-------------|
-| **Model** | `[Opus 4.6] claude-opus-4-6` | Display name + model ID |
+| **Model** | `[claude-opus-4-7[1m]]` | Model slug (`.model.id` from Claude Code) |
 | **Directory** | `📁 skills` | Current working directory name |
 | **Git** | `🌿 main*` | Branch name, `*` indicates uncommitted changes |
 | **Context** | `████░░░░░░ 42% ctx` | Context window used percentage with progress bar. Green <70%, yellow 70-89%, red 90%+ |
-| **Tokens** | `↑152.3k ↓45.2k` | Cumulative input/output tokens across the session (auto-scaled: `856`, `15.2k`, `1.5M`) |
-| **Cache** | `💾 r72.0k w5.0k` | Last API call's prompt cache: `r` = cache read (reused tokens), `w` = cache creation (newly cached tokens). Hidden before the first API call |
-| **Lines** | `+156 -23` | Total lines added (green) / removed (red) in this session |
-| **Duration** | `⏱ 2m15s ⚙45s` | Total session wall-clock time (`⏱`) and time spent waiting for API responses (`⚙`) |
+| **Cache** | `💾 r72.0k w5.0k` | Last API call's prompt cache: `r` = cache read (reused tokens), `w` = cache creation (newly cached tokens). Auto-scaled (`856`, `15.2k`, `1.5M`). Hidden before the first API call |
 
 ### Line 2 — ZenMux Account
 
 | Segment | Example | Description |
 |---------|---------|-------------|
 | **Plan** | `⚡ ZenMux Ultra` | Subscription tier. Shows `⚠` suffix when account status is not healthy |
-| **API Key** | `🔑 Sub sk-ss-v1-5f8...6e6` | Key type (`Sub` for `sk-ss-v1-*` subscription, `PAYG` for `sk-ai-v1-*`) + masked key (prefix + first 3 chars + last 3 chars). Hidden when `ZENMUX_API_KEY` is not set |
-| **Quota 5h** | `5h ░░░░░ 5%` | 5-hour rolling window quota usage with mini-bar. Green <70%, yellow 70-89%, red 90%+ |
-| **Quota 7d** | `7d ░░░░░ 1%` | 7-day rolling window quota usage, same color thresholds |
+| **API Key** | `🔑 Sub sk-ss-...6e6` | Key type (`Sub` for `sk-ss-v1-*` subscription, `PAYG` for `sk-ai-v1-*`) + masked key (type prefix + last 3 chars). Hidden when `ZENMUX_API_KEY` is not set |
+| **Quota 5h** | `5h █░░░░ 19%` | 5-hour rolling window quota usage with mini-bar. Green <70%, yellow 70-89%, red 90%+. Shows `⏳ Xh Ym` countdown to reset when 100% used |
+| **Quota 7d** | `7d █░░░░ 24%` | 7-day rolling window quota usage, same color and reset-countdown behavior |
 | **PAYG Balance** | `💳 Bal $492.74` | Available wallet balance (top-up + bonus credits). Hidden when no PAYG credits exist |
 
 ### Fallback Behavior
@@ -72,7 +69,7 @@ A two-line status bar displayed at the bottom of Claude Code, combining session 
 
 | Data | Interval | Source |
 |------|----------|--------|
-| Session (model, context, tokens, duration) | Real-time | Piped from Claude Code after each assistant message |
+| Session (model, context, cache) | Real-time | Piped from Claude Code after each assistant message |
 | Git branch | 5 seconds | Cached per session |
 | ZenMux account (plan, quota, PAYG) | 120 seconds | Cached globally, shared across sessions |
 

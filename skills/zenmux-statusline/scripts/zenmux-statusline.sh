@@ -1,6 +1,6 @@
 #!/bin/bash
 # ZenMux Status Line for Claude Code
-# Line 1: session info (model, dir, git, context remaining, duration)
+# Line 1: session info (model, dir, git, context used, cache tokens)
 # Line 2: ZenMux account (plan, quota usage, PAYG wallet balance)
 # Requires: curl, jq; ZENMUX_MANAGEMENT_KEY env var for account data
 
@@ -17,15 +17,15 @@ BOLD='\033[1m'
 RESET='\033[0m'
 
 # ── Helpers ──────────────────────────────────────────────────────────
-# Format milliseconds → "2m15s" or "45s"
-fmt_duration() {
-    local ms=${1:-0}
-    local mins=$(( ms / 60000 ))
-    local secs=$(( (ms % 60000) / 1000 ))
-    if [ "$mins" -gt 0 ]; then
-        echo "${mins}m${secs}s"
+# Format large numbers: 856 → "856", 15234 → "15.2k", 1523400 → "1.5M"
+fmt_num() {
+    local n=${1:-0}
+    if [ "$n" -ge 1000000 ] 2>/dev/null; then
+        awk "BEGIN{printf \"%.1fM\", $n/1000000}"
+    elif [ "$n" -ge 1000 ] 2>/dev/null; then
+        awk "BEGIN{printf \"%.1fk\", $n/1000}"
     else
-        echo "${secs}s"
+        echo "$n"
     fi
 }
 
@@ -58,11 +58,13 @@ fmt_time_until() {
 # ── Read Claude Code session data from stdin ─────────────────────────
 input=$(cat)
 
-MODEL_NAME=$(echo "$input" | jq -r '.model.display_name // "?"')
+MODEL_ID=$(echo "$input" | jq -r '.model.id // .model.display_name // "?"')
 DIR=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
 USED_PCT=$(echo "$input" | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
-DURATION_MS=$(echo "$input" | jq -r '.cost.total_duration_ms // 0')
-API_DURATION_MS=$(echo "$input" | jq -r '.cost.total_api_duration_ms // 0')
+
+# current_usage: token breakdown from the last API call (null before first call)
+CACHE_READ=$(echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // 0')
+CACHE_WRITE=$(echo "$input" | jq -r '.context_window.current_usage.cache_creation_input_tokens // 0')
 
 # ── Context used bar ────────────────────────────────────────────────
 if [ "$USED_PCT" -ge 90 ] 2>/dev/null; then CTX_COLOR="$RED"
@@ -77,8 +79,14 @@ CTX_BAR=""
 [ "$CTX_EMPTY" -gt 0 ] && printf -v PAD "%${CTX_EMPTY}s" && CTX_BAR="${CTX_BAR}${PAD// /░}"
 
 # ── Format session metrics ───────────────────────────────────────────
-TOTAL_DUR=$(fmt_duration "$DURATION_MS")
-API_DUR=$(fmt_duration "$API_DURATION_MS")
+C_READ=$(fmt_num "$CACHE_READ")
+C_WRITE=$(fmt_num "$CACHE_WRITE")
+
+# Cache section: only show when current_usage is available (after first API call)
+CACHE_PART=""
+if [ "$CACHE_READ" -gt 0 ] 2>/dev/null || [ "$CACHE_WRITE" -gt 0 ] 2>/dev/null; then
+    CACHE_PART=" ${DIM}|${RESET} 💾 ${DIM}r${RESET}${C_READ} ${DIM}w${RESET}${C_WRITE}"
+fi
 
 # ── Git branch (cached per session, 5s TTL) ─────────────────────────
 SESSION_ID=$(echo "$input" | jq -r '.session_id // "default"')
@@ -109,7 +117,7 @@ GIT_INFO=$(cat "$GIT_CACHE" 2>/dev/null || echo "")
 GIT_PART=""
 [ -n "$GIT_INFO" ] && GIT_PART=" ${DIM}|${RESET} 🌿 ${GIT_INFO}"
 
-printf '%b' "${CYAN}${BOLD}[${MODEL_NAME}]${RESET} 📁 ${DIR##*/}${GIT_PART} ${DIM}|${RESET} ${CTX_COLOR}${CTX_BAR}${RESET} ${USED_PCT}% ctx ${DIM}|${RESET} ⏱ ${TOTAL_DUR} ${DIM}⚙${RESET} ${API_DUR}\n"
+printf '%b' "${CYAN}${BOLD}[${MODEL_ID}]${RESET} 📁 ${DIR##*/}${GIT_PART} ${DIM}|${RESET} ${CTX_COLOR}${CTX_BAR}${RESET} ${USED_PCT}% ctx${CACHE_PART}\n"
 
 # ── ZenMux account data (Line 2) ────────────────────────────────────
 # If management key is not set, show a setup hint
@@ -171,6 +179,9 @@ SEVEN_D_PCT_INT=$(echo "$SEVEN_D_PCT" | awk '{printf "%.0f", $1 * 100}')
 make_usage_bar() {
     local pct=$1 width=5
     local filled=$(( pct * width / 100 ))
+    # Any non-zero usage should show at least one block, otherwise the bar
+    # looks empty (e.g. 19% with width=5 floors to 0 filled blocks).
+    [ "$pct" -gt 0 ] && [ "$filled" -lt 1 ] && filled=1
     [ "$filled" -gt "$width" ] && filled=$width
     local empty=$(( width - filled ))
     local color
@@ -212,13 +223,13 @@ fi
 KEY_PART=""
 if [ -n "$ZENMUX_API_KEY" ]; then
     KEY_RAW="$ZENMUX_API_KEY"
-    # Extract prefix (e.g. sk-ss-v1 or sk-ai-v1) and last 3 chars
-    KEY_PREFIX=$(echo "$KEY_RAW" | grep -oE '^sk-[a-z]+-v[0-9]+' || echo "")
+    # Extract type prefix (e.g. sk-ss, sk-ai) and last 3 chars
+    KEY_PREFIX=$(echo "$KEY_RAW" | grep -oE '^sk-[a-z]+' || echo "")
     KEY_SUFFIX="${KEY_RAW: -3}"
     if [ -n "$KEY_PREFIX" ]; then
-        KEY_MASKED="${KEY_PREFIX}-${KEY_RAW:${#KEY_PREFIX}+1:3}...${KEY_SUFFIX}"
+        KEY_MASKED="${KEY_PREFIX}-...${KEY_SUFFIX}"
     else
-        KEY_MASKED="${KEY_RAW:0:6}...${KEY_SUFFIX}"
+        KEY_MASKED="${KEY_RAW:0:5}...${KEY_SUFFIX}"
     fi
     # Determine key type: sk-ss-v1 = Subscription, sk-ai-v1 = PAYG
     case "$KEY_RAW" in
