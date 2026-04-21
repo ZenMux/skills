@@ -24,7 +24,7 @@ npx skills add https://github.com/zenmux/skills --skill zenmux-statusline
 |-------|-------------|
 | **zenmux-context** | ZenMux documentation expert. Answers questions about product features, API usage, integration, configuration, and best practices by pulling the latest official docs and providing cited responses. Supports both English and Chinese. |
 | **zenmux-setup** | Interactive onboarding guide. Walks users through configuring ZenMux with their tool or SDK step by step. |
-| **zenmux-usage** | Query real-time ZenMux account data via the Management API: subscription detail, quota usage (5h/7d/monthly), account status, Flow rate, PAYG balance, and per-generation cost/token breakdown. |
+| **zenmux-usage** | Query real-time ZenMux account data via the Management API: subscription detail, quota usage (5h/7d/monthly), account status, Flow rate, PAYG balance, per-generation cost/token breakdown, and platform statistics (timeseries trends, model leaderboards, provider market share). |
 | **zenmux-feedback** | Submit GitHub issues, feature requests, bug reports, product suggestions, and feedback to ZenMux. Gathers info conversationally and submits via `gh` CLI. |
 | **zenmux-statusline** | Install a Claude Code status line that displays real-time ZenMux account info (subscription tier, 5h/7d quota usage, PAYG wallet balance, API key type) alongside session metrics (model, context usage, prompt cache hits). |
 
