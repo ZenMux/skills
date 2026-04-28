@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Official Claude Code skills for ZenMux",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "plugins": [
     {
@@ -28,6 +28,15 @@
       "skills": [
         "./skills/zenmux-usage",
         "./skills/zenmux-statusline"
+      ]
+    },
+    {
+      "name": "zenmux-creative",
+      "description": "ZenMux creative generation — produce images via any ZenMux image model (gpt-image-2, Nano Banana Pro, Qwen, Doubao, ERNIE, GLM, Hunyuan, Kling, ...) with model-aware prompt optimization, multi-image reference support via local paths or URLs ([Image #N] convention), and 4-variant defaults saved locally for review",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/zenmux-image-generation"
       ]
     }
   ]

@@ -1,3 +1,9 @@
 skills/zenmux-context/references/zenmux-doc
 .DS_Store
 skills/zenmux-feedback/references/zenmux-doc
+skills/zenmux-image-generation/prompts/*
+!skills/zenmux-image-generation/prompts/.gitkeep
+skills/zenmux-image-generation/output/*
+!skills/zenmux-image-generation/output/.gitkeep
+skills/zenmux-image-generation/.venv/
+skills/zenmux-image-generation/scripts/__pycache__/

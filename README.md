@@ -16,6 +16,7 @@ npx skills add https://github.com/zenmux/skills --skill zenmux-setup
 npx skills add https://github.com/zenmux/skills --skill zenmux-usage
 npx skills add https://github.com/zenmux/skills --skill zenmux-feedback
 npx skills add https://github.com/zenmux/skills --skill zenmux-statusline
+npx skills add https://github.com/zenmux/skills --skill zenmux-image-generation
 ```
 
 ## Available Skills
@@ -27,6 +28,7 @@ npx skills add https://github.com/zenmux/skills --skill zenmux-statusline
 | **zenmux-usage** | Query real-time ZenMux account data via the Management API: subscription detail, quota usage (5h/7d/monthly), account status, Flow rate, PAYG balance, per-generation cost/token breakdown, and platform statistics (timeseries trends, model leaderboards, provider market share). |
 | **zenmux-feedback** | Submit GitHub issues, feature requests, bug reports, product suggestions, and feedback to ZenMux. Gathers info conversationally and submits via `gh` CLI. |
 | **zenmux-statusline** | Install a Claude Code status line that displays real-time ZenMux account info (subscription tier, 5h/7d quota usage, PAYG wallet balance, API key type) alongside session metrics (model, context usage, prompt cache hits). |
+| **zenmux-image-generation** | Generate images via ZenMux's image models (`openai/gpt-image-2`, Google Nano Banana Pro, Qwen Image, Doubao Seedream, ERNIE Image, GLM Image, Hunyuan Image, Kling, etc.). Picks an appropriate model, optimizes the prompt against that model's strengths (GPT Image 2 vs. Nano Banana guides), supports multi-image references via local paths or URLs (`[Image #N]` convention), saves the optimized prompt for review, and produces 4 variants by default. |
 
 ## zenmux-statusline
 
@@ -103,6 +105,18 @@ skills/                              # Skills directory
     SKILL.md                         # Skill definition
     scripts/
       zenmux-statusline.sh           # Status line bash script
+  zenmux-image-generation/           # ZenMux image generation skill
+    SKILL.md                         # Skill definition
+    scripts/
+      refresh_references.sh          # Curl the two prompt cookbooks from upstream awesome repos (run at start of every invocation)
+      list_models.sh                 # Filter ZenMux model list to image models
+      generate.py                    # Unified generator (Gemini + OpenAI-family routing, ref-image support)
+    references/                      # Curl'd prompt cookbooks + ZenMux API reference
+      awesome-gpt-image-2.md           # YouMind-OpenLab/awesome-gpt-image-2 README (~2700 prompts)
+      awesome-nano-banana-pro-prompts.md  # YouMind-OpenLab/awesome-nano-banana-pro-prompts README
+      zenmux-image-api.md
+    prompts/                         # User-confirmed optimized prompts (git-ignored)
+    output/                          # Generated images (git-ignored)
 ```
 
 ## Links
