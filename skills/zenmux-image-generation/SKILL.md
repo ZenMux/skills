@@ -1,24 +1,16 @@
 ---
 name: zenmux-image-generation
 description: >-
-  Generate images via ZenMux's image-generation models (openai/gpt-image-2, Google
-  Nano Banana Pro / Gemini 3 Pro Image, Nano Banana 2, Qwen Image, ByteDance Doubao
-  Seedream, Baidu ERNIE-Image, Z.AI GLM-Image, Tencent Hunyuan Image, KlingAI Kling,
-  and any future ZenMux image model). Use this skill whenever the user wants to
-  create, generate, render, design, illustrate, draw, paint, edit, or remix an
-  image — including text-to-image, image editing with reference images / URLs,
-  photorealistic photos, portraits, logos, product shots, posters, infographics,
-  comics, ads, UI mockups, marketing creatives, packaging mocks, scientific
-  diagrams, character illustrations, style transfer, virtual try-on, and any
-  visual asset. Also trigger on Chinese requests like 生成图片, 画一张, 出图,
-  AI 画图, 文生图, 图生图, 设计海报, 做一个 logo, 制作信息图, 改图, P 图, 图片编辑,
-  图片生成, 帮我画, 用 ZenMux 生图. Even when the user does not say "ZenMux"
-  explicitly but is working in this project and asks for image output, prefer this
-  skill — it picks the right ZenMux model, optimizes the prompt according to that
-  model's strengths (GPT Image 2 best practices vs. Nano Banana / Gemini techniques),
-  saves the optimized prompt for the user to confirm, and then calls the ZenMux
-  Vertex-AI–compatible API to produce 4 image variants by default, saving every
-  output locally inside the skill folder.
+  Generate or edit images through ZenMux image models such as openai/gpt-image-2,
+  Nano Banana Pro / Gemini 3 Pro Image, Nano Banana 2, Qwen Image, Doubao
+  Seedream, ERNIE-Image, GLM-Image, Hunyuan Image, KlingAI Kling, and future
+  ZenMux image models. Use for text-to-image, image editing from references or
+  URLs, photos, portraits, logos, product shots, posters, infographics, comics,
+  ads, UI mockups, marketing creatives, packaging mocks, diagrams, characters,
+  style transfer, virtual try-on, and other visual assets. Trigger on create,
+  generate, render, design, draw, paint, edit, remix, 生成图片, 画一张, 出图,
+  AI 画图, 文生图, 图生图, 设计海报, 做 logo, 改图, P 图, 图片编辑, 帮我画, 用
+  ZenMux 生图. In a ZenMux project context, prefer this skill for image output.
 ---
 
 # zenmux-image-generation
@@ -370,24 +362,29 @@ The script automatically:
 - Saves outputs as `<model-slug>-<timestamp>-<NN>.<ext>` so successive runs
   don't overwrite each other.
 
-### Python SDK quirks (worth knowing)
+### How `--size` and `--quality` reach the API
 
-Two ZenMux-supported parameters are not exposed by the `google-genai` Python
-SDK we use; the script handles them gracefully but you should know what to
-expect:
+ZenMux exposes `size` and `quality` as OpenAI-specific knobs that ride on
+Vertex AI's `httpOptions.extraBody` passthrough rather than as typed
+`GenerateImagesConfig` / `EditImageConfig` fields. The script wires them up
+the same way for both `generate_images` and `edit_image`:
 
-- **`--quality`**: not a typed field on the Python SDK. The script accepts it
-  on the CLI and records it in the prompt metadata, but the actual API call
-  uses the model's default quality. ZenMux's TypeScript SDK does honour
-  `quality`. Don't promise the user a specific quality tier on the Python
-  path — say "model default" instead.
-- **`--size` on edit**: `EditImageConfig` doesn't accept `image_size`. When
-  reference images are present, the script silently drops `--size` and the
-  output dimensions follow the first reference image. This is usually what
-  the user wants for edits anyway.
+```python
+config=types.GenerateImagesConfig(   # or EditImageConfig
+    number_of_images=n,
+    http_options=types.HttpOptions(
+        extra_body={
+            "imageSize": size,       # e.g. "1536x1024", "3840x2160"
+            "quality":   quality,    # "low" | "medium" | "high" | "auto"
+        },
+    ),
+)
+```
 
-Both cases emit a one-line warning to stderr so the actual behaviour is never
-hidden.
+This is the supported path in both Python and TypeScript SDKs (per the
+ZenMux docs), so `--quality` is honoured on the Python path *and* `--size`
+is honoured even on edits. No silent drops, no stderr warnings — what you
+pass on the CLI is what hits the API.
 
 If the call fails, read the error and decide:
 

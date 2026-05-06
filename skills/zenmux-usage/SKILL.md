@@ -1,22 +1,17 @@
 ---
 name: zenmux-usage
 description: >-
-  Query real-time ZenMux account data via the Management API: subscription detail, quota
-  usage (5h/7d/monthly), account status, Flow rate, PAYG balance, per-generation cost, and
-  platform statistics (timeseries trends, model leaderboards, provider market share).
-  Use whenever the user wants to CHECK or LOOK UP current usage, remaining quota, credit
-  balance, Flow rate, a generation's cost/tokens, consumption trends, top models, or
-  provider market share. Trigger on: "check my usage", "quota left", "my balance",
-  "subscription status", "Flow rate", "generation cost", "bonus credits", "usage trend",
-  "token trend", "cost trend", "daily usage", "weekly usage", "top models", "model ranking",
-  "leaderboard", "which model did I use most", "market share", "provider share", "provider
-  breakdown", "查用量", "余额", "配额", "订阅详情", "Flow 汇率", "查一下请求花了多少",
-  "额度还剩多少", "使用趋势", "消费趋势", "token 趋势", "成本趋势", "排行榜", "用得最多的模型",
-  "top 模型", "模型排名", "市场份额", "供应商占比", "供应商分布".
-  Activate even without "ZenMux" when user asks to retrieve usage numbers, quota, balance,
-  generation cost, statistics, trends, rankings, or provider share in a ZenMux context. Do
-  NOT trigger for docs, integration setup, plan comparison, top-up instructions, error
-  troubleshooting, or code-writing — use zenmux-context.
+  Query real-time ZenMux account data via the Management API: subscription
+  detail, account status, quota usage (5h/7d/monthly), Flow rate, PAYG balance,
+  per-generation cost/tokens, timeseries trends, model leaderboards, and
+  provider market share. Use when the user wants current usage, remaining
+  quota, credits, balance, bonus credits, Flow rate, generation cost, token/cost
+  trends, top models, rankings, or provider share. Trigger on "check my usage",
+  "quota left", "my balance", "subscription status", "Flow rate", "generation
+  cost", "usage trend", "top models", "leaderboard", "market share",
+  "provider breakdown", "查用量", "余额", "配额", "订阅详情", "Flow 汇率",
+  "额度还剩多少", "使用趋势", "排行榜", "模型排名", "供应商占比". Do not use for
+  docs, setup, top-up, troubleshooting, or code-writing.
 ---
 
 # zenmux-usage

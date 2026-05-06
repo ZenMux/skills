@@ -2,49 +2,49 @@
 head:
   - - meta
     - name: description
-      content: 图片生成
+      content: Image Generation
   - - meta
     - name: keywords
       content: Zenmux, guide, tutorial, image, generation, API
 ---
 
-# 图片生成
+# Image Generation
 
-ZenMux 支持通过 Vertex AI 协议调用图片生成模型。本指南将介绍如何使用 ZenMux 生成图片并保存到本地。
+ZenMux supports invoking image generation models via the Vertex AI protocol. This guide explains how to use ZenMux to generate images and save them locally.
 
-::: tip 💡 关于 Banana 模型
-Banana 是 Google 推出的图片生成模型系列,能够根据文本描述生成高质量图片。您可以通过 Vertex AI 协议在 ZenMux 中使用这些模型。
+::: tip 💡 About Banana Models
+Banana is a series of image generation models from Google that can produce high-quality images from text prompts. You can use these models in ZenMux through the Vertex AI protocol.
 :::
 
-## 支持的模型
+## Supported Models
 
-目前支持的图片生成模型包括(持续更新中):
+The currently supported image generation models include (continuously updated):
 
-**Google Gemini 系列** — 使用 `generate_content` 接口,响应中同时包含文本和图片:
+**Google Gemini Series** — Use the `generate_content` API; responses contain both text and images:
 
 - `google/gemini-3-pro-image-preview`
 - `google/gemini-3-pro-image-preview-free`
 - `google/gemini-2.5-flash-image`
 - `google/gemini-2.5-flash-image-free`
 
-**非 Google 模型** — 使用 `generate_images` / `edit_image` 接口,支持图片生成与编辑:
+**Non-Google Models** — Use the `generate_images` / `edit_image` API; support image generation and editing:
 
 - `openai/gpt-image-1.5`
 - `openai/gpt-image-2`
 - `qwen/qwen-image-2.0`
 
-::: tip 📚 更多模型
-访问 [ZenMux 模型列表](https://zenmux.ai/models) 搜索查看所有可用的图片生成模型。
+::: tip 📚 More Models
+Visit the [ZenMux model catalog](https://zenmux.ai/models) to search and view all available image generation models.
 :::
 
-## 参考文档
+## Reference Documentation
 
-本指南只列出了基本的使用方法,更多详细配置和其他高级用法请参考以下官方文档:
+This guide only covers basic usage. For detailed configuration and advanced usage, refer to the official documentation below:
 
-- [Vertex AI 官方文档](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference)
+- [Vertex AI Official Documentation](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference)
 - [Vertex AI Nano-Banana Notebook](https://github.com/GoogleCloudPlatform/generative-ai/tree/main/gemini/nano-banana)
 
-## 使用方式
+## Usage
 
 ::: code-group
 
@@ -53,7 +53,7 @@ from google import genai
 from google.genai import types
 
 client = genai.Client(
-    api_key="$ZENMUX_API_KEY",  # 替换为你的 API Key
+    api_key="$ZENMUX_API_KEY",  # Replace with your API Key
     vertexai=True,
     http_options=types.HttpOptions(
         api_version='v1',
@@ -61,8 +61,8 @@ client = genai.Client(
     ),
 )
 
-# 流式调用: generate_content_stream
-# 非流式调用: generate_content
+# Streaming: generate_content_stream
+# Non-streaming: generate_content
 prompt = "Create a picture of a nano banana dish in a fancy restaurant with a Gemini theme"
 
 response = client.models.generate_content(
@@ -73,12 +73,12 @@ response = client.models.generate_content(
     )
 )
 
-# 处理文本和图片响应
+# Process text and image responses
 for part in response.parts:
     if part.text is not None:
         print(part.text)
     elif part.inline_data is not None:
-        # 保存生成的图片
+        # Save the generated image
         image = part.as_image()
         image.save("generated_image.png")
         print("Image saved as generated_image.png")
@@ -88,7 +88,7 @@ for part in response.parts:
 const genai = require("@google/genai");
 
 const client = new genai.GoogleGenAI({
-  apiKey: "$ZENMUX_API_KEY", // 替换为你的 API Key
+  apiKey: "$ZENMUX_API_KEY", // Replace with your API Key
   vertexai: true,
   httpOptions: {
     baseUrl: "https://zenmux.ai/api/vertex-ai",
@@ -96,15 +96,15 @@ const client = new genai.GoogleGenAI({
   },
 });
 
-// 流式调用: generateContentStream
-// 非流式调用: generateContent
+// Streaming: generateContentStream
+// Non-streaming: generateContent
 const response = await client.models.generateContent({
   model: "google/gemini-3-pro-image-preview",
   contents:
     "Generate an image of the Eiffel tower with fireworks in the background",
   config: {
-    responseModalities: ["TEXT", "IMAGE"], // 必须指定响应模态
-    // 更多配置参数请参考 Vertex AI 官方文档
+    responseModalities: ["TEXT", "IMAGE"], // Response modalities must be specified
+    // For more configuration options, see the Vertex AI documentation
   },
 });
 
@@ -113,50 +113,58 @@ console.log(response);
 
 :::
 
-## 非 Google 模型使用方式
+## Non-Google Model Usage
 
-对于 `openai/gpt-image-1.5`、`openai/gpt-image-2`、`qwen/qwen-image-2.0` 等非 Google 模型,请使用 `generate_images` 和 `edit_image` 接口。
+For non-Google models such as `openai/gpt-image-1.5`, `openai/gpt-image-2`, and `qwen/qwen-image-2.0`, use the `generate_images` and `edit_image` APIs.
 
-ZenMux 内部将 Vertex AI 协议的参数转换为 OpenAI 图片生成 API 格式,下面的参数对照表可以帮助你理解如何使用各项功能。
+ZenMux internally translates Vertex AI protocol parameters into the OpenAI image generation API format. The mapping tables below help you understand how to use each feature.
 
-### 支持的参数
+### Supported Parameters
 
-#### generate_images 参数
+#### generate_images Parameters
 
-以下是 [OpenAI 官方图片生成参数](https://developers.openai.com/api/reference/resources/images/methods/generate) 与 ZenMux Vertex AI 协议的对照:
+The following table maps the [official OpenAI image generation parameters](https://developers.openai.com/api/reference/resources/images/methods/generate) to the ZenMux Vertex AI protocol:
 
-| OpenAI 参数 | Vertex AI 对应写法 | 类型 | 说明 | 支持 |
+| OpenAI Parameter | Vertex AI Equivalent | Type | Description | Supported |
 |---|---|---|---|---|
-| `prompt` | `prompt`（SDK 直传） | string | 文本描述（必填） | ✅ |
-| `model` | `model`（SDK 直传） | string | 模型名称 | ✅ |
-| `n` | `config.number_of_images` | number | 生成图片数量（1-10） | ✅ |
-| `size` | `config.image_size` | string | 图片尺寸：`1024x1024`、`1536x1024`（横版）、`1024x1536`（竖版）、`auto` | ✅ |
-| `quality` | `config.quality` | string | 图片质量：`low` / `medium` / `high` / `auto`（仅 TypeScript SDK） | ✅ |
-| `output_format` | `config.output_mime_type` | string | 输出格式：`image/png`、`image/jpeg`、`image/webp` | ✅ |
-| `output_compression` | `config.output_compression_quality` | number | 压缩质量（0-100）,仅 webp/jpeg 有效 | ✅ |
-| `background` | — | string | 背景透明度设置 | ❌ |
-| `moderation` | — | string | 内容审核级别 | ❌ |
-| `style` | — | string | DALL-E 3 风格参数 | ❌ |
-| `response_format` | — | string | 不适用（统一返回 base64） | ❌ |
+| `prompt` | `prompt` (passed directly via SDK) | string | Text description (required) | ✅ |
+| `model` | `model` (passed directly via SDK) | string | Model name | ✅ |
+| `n` | `config.number_of_images` | number | Number of images to generate (1-10) | ✅ |
+| `size` | `config.http_options.extra_body.imageSize` | string | Image size (**passthrough**). Common values: `1024x1024`, `1536x1024` (landscape), `1024x1536` (portrait), `auto`. Other sizes accepted by the underlying model are also supported — refer to the OpenAI docs and the passthrough note below. | ✅ |
+| `quality` | `config.http_options.extra_body.quality` | string | Image quality (**passthrough**). Common values: `low` / `medium` / `high` / `auto`. Any value supported by the underlying model can be used — refer to the OpenAI docs. | ✅ |
+| `output_format` | `config.output_mime_type` | string | Output format: `image/png`, `image/jpeg`, `image/webp` | ✅ |
+| `output_compression` | `config.output_compression_quality` | number | Compression quality (0-100), only valid for webp/jpeg | ✅ |
+| `background` | — | string | Background transparency setting | ❌ |
+| `moderation` | — | string | Content moderation level | ❌ |
+| `style` | — | string | DALL-E 3 style parameter | ❌ |
+| `response_format` | — | string | Not applicable (always returns base64) | ❌ |
 
-#### edit_image 参数
+#### edit_image Parameters
 
-以下是 [OpenAI 官方图片编辑参数](https://developers.openai.com/api/reference/resources/images/methods/edit) 与 ZenMux Vertex AI 协议的对照:
+The following table maps the [official OpenAI image editing parameters](https://developers.openai.com/api/reference/resources/images/methods/edit) to the ZenMux Vertex AI protocol:
 
-| OpenAI 参数 | Vertex AI 对应写法 | 类型 | 说明 | 支持 |
+| OpenAI Parameter | Vertex AI Equivalent | Type | Description | Supported |
 |---|---|---|---|---|
-| `prompt` | `prompt`（SDK 直传） | string | 编辑描述（必填） | ✅ |
-| `model` | `model`（SDK 直传） | string | 模型名称 | ✅ |
-| `image` | `reference_images`（`referenceType` 非 MASK） | file/base64 | 参考图片,支持多张 | ✅ |
-| `mask` | `reference_images`（`referenceType = REFERENCE_TYPE_MASK`） | file/base64 | 蒙版图片,透明区域为编辑区域 | ✅ |
-| `n` | `config.number_of_images` | number | 生成数量（1-10） | ✅ |
-| `size` | `config.image_size` | string | 图片尺寸：`1024x1024`、`1536x1024`、`1024x1536`、`auto` | ✅ |
-| `quality` | `config.quality` | string | 图片质量：`low` / `medium` / `high` / `auto`（仅 TypeScript SDK） | ✅ |
-| `output_format` | `config.output_mime_type` | string | 输出格式 | ✅ |
-| `output_compression` | `config.output_compression_quality` | number | 压缩质量 | ✅ |
-| `background` | — | — | 不支持 | ❌ |
+| `prompt` | `prompt` (passed directly via SDK) | string | Edit description (required) | ✅ |
+| `model` | `model` (passed directly via SDK) | string | Model name | ✅ |
+| `image` | `reference_images` (with `referenceType` other than MASK) | file/base64 | Reference images, multiple supported | ✅ |
+| `mask` | `reference_images` (with `referenceType = REFERENCE_TYPE_MASK`) | file/base64 | Mask image; transparent areas are the editable region | ✅ |
+| `n` | `config.number_of_images` | number | Number of images (1-10) | ✅ |
+| `size` | `config.http_options.extra_body.imageSize` | string | Image size (**passthrough**). Common values: `1024x1024`, `1536x1024`, `1024x1536`, `auto`. Other sizes accepted by the underlying model are also supported — refer to the OpenAI docs. | ✅ |
+| `quality` | `config.http_options.extra_body.quality` | string | Image quality (**passthrough**). Common values: `low` / `medium` / `high` / `auto`. Any value supported by the underlying model can be used — refer to the OpenAI docs. | ✅ |
+| `output_format` | `config.output_mime_type` | string | Output format | ✅ |
+| `output_compression` | `config.output_compression_quality` | number | Compression quality | ✅ |
+| `background` | — | — | Not supported | ❌ |
 
-### 生成图片
+::: tip 💡 About Parameter Passing
+
+`imageSize` and `quality` are **passthrough parameters** — ZenMux forwards them as-is to the underlying OpenAI-compatible image generation API without validation or transformation. The values shown in the tables above are the most common options; for the complete list of supported values and behavioral details, refer to the official OpenAI documentation for [image generation](https://developers.openai.com/api/reference/resources/images/methods/generate) and [image editing](https://developers.openai.com/api/reference/resources/images/methods/edit), and configure them based on your needs.
+
+Pass these OpenAI-specific parameters through `httpOptions.extraBody` to ensure consistent behavior across the Python and TypeScript SDKs. Standard Vertex AI fields such as `numberOfImages`, `outputMimeType`, and `outputCompressionQuality` can be set directly at the top level of `config`.
+
+:::
+
+### Generating Images
 
 ::: code-group
 
@@ -165,7 +173,7 @@ from google import genai
 from google.genai import types
 
 client = genai.Client(
-    api_key="$ZENMUX_API_KEY",  # 替换为你的 API Key
+    api_key="$ZENMUX_API_KEY",  # Replace with your API Key
     vertexai=True,
     http_options=types.HttpOptions(
         api_version='v1',
@@ -174,11 +182,11 @@ client = genai.Client(
 )
 
 response = client.models.generate_images(
-    model="openai/gpt-image-2",  # 或 qwen/qwen-image-2.0
+    model="openai/gpt-image-2",  # or qwen/qwen-image-2.0
     prompt="A cat and a dog"
 )
 
-# 保存生成的图片
+# Save the generated images
 for i, img in enumerate(response.generated_images):
     img.image.save(f"generated_{i}.png")
     print(f"Image saved as generated_{i}.png")
@@ -188,7 +196,7 @@ for i, img in enumerate(response.generated_images):
 const { GoogleGenAI } = require("@google/genai");
 
 const client = new GoogleGenAI({
-  apiKey: "$ZENMUX_API_KEY", // 替换为你的 API Key
+  apiKey: "$ZENMUX_API_KEY", // Replace with your API Key
   vertexai: true,
   httpOptions: {
     baseUrl: "https://zenmux.ai/api/vertex-ai",
@@ -197,7 +205,7 @@ const client = new GoogleGenAI({
 });
 
 const response = await client.models.generateImages({
-  model: "openai/gpt-image-2", // 或 qwen/qwen-image-2.0
+  model: "openai/gpt-image-2", // or qwen/qwen-image-2.0
   prompt: "A cat and a dog",
 });
 
@@ -206,11 +214,11 @@ console.log(response);
 
 :::
 
-### 高级参数示例
+### Advanced Parameter Examples
 
-#### 生成高清大尺寸图片
+#### Generating High-Resolution Images
 
-通过 `image_size` 和 `quality` 参数生成高质量大尺寸图片:
+Pass `imageSize` and `quality` through `httpOptions.extraBody` to generate high-quality, large-size images:
 
 ::: code-group
 
@@ -231,8 +239,13 @@ response = client.models.generate_images(
     model="openai/gpt-image-2",
     prompt="A futuristic cityscape at sunset, ultra detailed",
     config=types.GenerateImagesConfig(
-        number_of_images=1,          # 生成 1 张
-        image_size="1536x1024",      # 横版高分辨率
+        number_of_images=1,                         # Generate 1 image
+        http_options=types.HttpOptions(
+            extra_body={
+                "imageSize": "1536x1024",           # Landscape high resolution
+                "quality": "high",                  # High quality
+            }
+        ),
     )
 )
 
@@ -257,9 +270,13 @@ const response = await client.models.generateImages({
   model: "openai/gpt-image-2",
   prompt: "A futuristic cityscape at sunset, ultra detailed",
   config: {
-    numberOfImages: 1,          // 生成 1 张
-    imageSize: "1536x1024",     // 横版高分辨率
-    quality: "high",            // 高质量（仅 TypeScript SDK 支持）
+    numberOfImages: 1,                  // Generate 1 image
+    httpOptions: {
+      extraBody: {
+        imageSize: "1536x1024",         // Landscape high resolution
+        quality: "high",                // High quality
+      },
+    },
   },
 });
 
@@ -270,9 +287,9 @@ for (const img of response.generatedImages) {
 
 :::
 
-#### 生成 4K 图片
+#### Generating 4K Images
 
-`openai/gpt-image-2` 支持自定义尺寸,可以生成 4K 分辨率的图片:
+`openai/gpt-image-2` supports custom sizes, including 4K resolution:
 
 ::: code-group
 
@@ -289,13 +306,18 @@ client = genai.Client(
     ),
 )
 
-# 生成 4K 横版图片（3840x2160）
+# Generate a 4K landscape image (3840x2160)
 response = client.models.generate_images(
     model="openai/gpt-image-2",
     prompt="A breathtaking mountain landscape at golden hour, photorealistic",
     config=types.GenerateImagesConfig(
         number_of_images=1,
-        image_size="3840x2160",      # 4K UHD 分辨率
+        http_options=types.HttpOptions(
+            extra_body={
+                "imageSize": "3840x2160",   # 4K UHD resolution
+                "quality": "high",          # High quality
+            }
+        ),
     )
 )
 
@@ -316,14 +338,18 @@ const client = new GoogleGenAI({
   },
 });
 
-// 生成 4K 横版图片（3840x2160）
+// Generate a 4K landscape image (3840x2160)
 const response = await client.models.generateImages({
   model: "openai/gpt-image-2",
   prompt: "A breathtaking mountain landscape at golden hour, photorealistic",
   config: {
     numberOfImages: 1,
-    imageSize: "3840x2160",          // 4K UHD 分辨率
-    quality: "high",                 // 高质量（仅 TypeScript SDK 支持）
+    httpOptions: {
+      extraBody: {
+        imageSize: "3840x2160",      // 4K UHD resolution
+        quality: "high",             // High quality
+      },
+    },
   },
 });
 
@@ -334,31 +360,31 @@ for (const img of response.generatedImages) {
 
 :::
 
-::: tip 💡 尺寸选项
+::: tip 💡 Size Options
 
-**预设尺寸:** `1024x1024`（正方形）、`1536x1024`（横版）、`1024x1536`（竖版）、`auto`（自动）
+**Preset sizes:** `1024x1024` (square), `1536x1024` (landscape), `1024x1536` (portrait), `auto`
 
-**自定义尺寸**（仅 `openai/gpt-image-2`）: 支持传入任意自定义尺寸,需满足以下条件:
-- 宽和高都必须是 **16 的倍数**
-- 单边最大 **3840px**
-- 宽高比不超过 **3:1**
-- 总像素在 655,360 ~ 8,294,400 之间
+**Custom sizes** (only `openai/gpt-image-2`): any custom size is supported, subject to the following constraints:
+- Width and height must each be a **multiple of 16**
+- Maximum side length is **3840px**
+- Aspect ratio must not exceed **3:1**
+- Total pixels must fall between 655,360 and 8,294,400
 
-常用自定义尺寸参考:
+Common custom sizes for reference:
 
-| 尺寸 | 分辨率 | 适用场景 |
+| Size | Resolution | Use Case |
 |---|---|---|
-| `1920x1080` | 1080p | 博客封面、网页横幅 |
-| `1080x1920` | 1080p 竖版 | 手机壁纸、社交媒体故事 |
-| `2560x1440` | 2K QHD | 桌面壁纸 |
-| `3840x2160` | 4K UHD | 高清海报、大屏展示 |
+| `1920x1080` | 1080p | Blog covers, web banners |
+| `1080x1920` | 1080p portrait | Phone wallpapers, social media stories |
+| `2560x1440` | 2K QHD | Desktop wallpapers |
+| `3840x2160` | 4K UHD | High-resolution posters, large displays |
 
-不同尺寸会影响生成耗时和 token 消耗,尺寸越大费用越高。超过 2560x1440 的尺寸为实验性功能,生成结果可能存在不稳定性。
+Different sizes affect generation time and token cost — larger sizes are more expensive. Sizes above 2560x1440 are experimental and may produce inconsistent results.
 :::
 
-#### 指定输出格式和压缩质量
+#### Specifying Output Format and Compression Quality
 
-通过 `output_mime_type` 和 `output_compression_quality` 控制输出格式:
+Use `output_mime_type` and `output_compression_quality` to control the output format:
 
 ::: code-group
 
@@ -367,9 +393,9 @@ response = client.models.generate_images(
     model="openai/gpt-image-2",
     prompt="A minimalist logo design",
     config=types.GenerateImagesConfig(
-        number_of_images=2,                 # 生成 2 张
-        output_mime_type="image/webp",      # WebP 格式,体积更小
-        output_compression_quality=80,      # 80% 压缩质量
+        number_of_images=2,                 # Generate 2 images
+        output_mime_type="image/webp",      # WebP format, smaller file size
+        output_compression_quality=80,      # 80% compression quality
     )
 )
 
@@ -382,33 +408,41 @@ const response = await client.models.generateImages({
   model: "openai/gpt-image-2",
   prompt: "A minimalist logo design",
   config: {
-    numberOfImages: 2,                    // 生成 2 张
-    outputMimeType: "image/webp",         // WebP 格式,体积更小
-    outputCompressionQuality: 80,         // 80% 压缩质量
+    numberOfImages: 2,                    // Generate 2 images
+    outputMimeType: "image/webp",         // WebP format, smaller file size
+    outputCompressionQuality: 80,         // 80% compression quality
   },
 });
 ```
 
 :::
 
-::: tip 💡 输出格式
-- `image/png`: 无损格式,适合需要高保真的场景（默认）
-- `image/webp`: 体积更小,适合 Web 展示
-- `image/jpeg`: 通用有损格式,可配合 `output_compression_quality` 控制质量
+::: tip 💡 Output Formats
+- `image/png`: lossless format, ideal when high fidelity is needed (default)
+- `image/webp`: smaller file size, ideal for web display
+- `image/jpeg`: general-purpose lossy format; pair with `output_compression_quality` to control quality
 :::
 
-### 编辑图片
+### Editing Images
 
-在已有图片的基础上进行修改,使用 `edit_image` 接口:
+To modify an existing image, use the `edit_image` API. The example below uses the ZenMux logo and transforms it into Chinese paper-cut style.
+
+::: tip 💡 Prompt Tips
+
+The `edit_image` model is sensitive to the prompt. If the prompt is too vague (for example, `"Transform this logo into..."`), the model may freely generate from the style description and ignore the input image entirely. We recommend **explicitly instructing the model to preserve the subject/composition of the original image** and only change the style.
+
+:::
 
 ::: code-group
 
 ```Python [Python]
+import urllib.request
+
 from google import genai
 from google.genai import types
 
 client = genai.Client(
-    api_key="$ZENMUX_API_KEY",  # 替换为你的 API Key
+    api_key="$ZENMUX_API_KEY",  # Replace with your API Key
     vertexai=True,
     http_options=types.HttpOptions(
         api_version='v1',
@@ -416,25 +450,29 @@ client = genai.Client(
     ),
 )
 
-# 先生成一张图片
-generate_response = client.models.generate_images(
-    model="openai/gpt-image-2",
-    prompt="A cat sitting on a table"
-)
+# Load the image to edit (using the ZenMux logo as an example)
+LOGO_URL = "https://cdn.marmot-cloud.com/storage/zenmux/2026/04/28/74mUf4t/Log-Light.png"
+logo_bytes = urllib.request.urlopen(LOGO_URL).read()
+original_image = types.Image(image_bytes=logo_bytes, mime_type="image/png")
 
-# 基于生成的图片进行编辑
+# Edit the original image — restyle as paper-cut
 edit_response = client.models.edit_image(
     model="openai/gpt-image-2",
-    prompt="Add a robot next to the cat",
+    prompt=(
+        "Keep the exact same subject, silhouette and pose from the input image. "
+        "Re-render it in Chinese paper-cut art style: traditional red color, "
+        "intricate hollow patterns, plain white background. "
+        "Do not change the subject or composition; only restyle it as paper-cut."
+    ),
     reference_images=[
         types.RawReferenceImage(
             reference_id=1,
-            reference_image=generate_response.generated_images[0].image
+            reference_image=original_image
         )
     ]
 )
 
-# 保存编辑后的图片
+# Save the edited image
 for i, img in enumerate(edit_response.generated_images):
     img.image.save(f"edited_{i}.png")
     print(f"Edited image saved as edited_{i}.png")
@@ -444,7 +482,7 @@ for i, img in enumerate(edit_response.generated_images):
 const { GoogleGenAI, RawReferenceImage } = require("@google/genai");
 
 const client = new GoogleGenAI({
-  apiKey: "$ZENMUX_API_KEY", // 替换为你的 API Key
+  apiKey: "$ZENMUX_API_KEY", // Replace with your API Key
   vertexai: true,
   httpOptions: {
     baseUrl: "https://zenmux.ai/api/vertex-ai",
@@ -452,20 +490,27 @@ const client = new GoogleGenAI({
   },
 });
 
-// 先生成一张图片
-const generateResponse = await client.models.generateImages({
-  model: "openai/gpt-image-2",
-  prompt: "A cat sitting on a table",
-});
+// Load the image to edit (using the ZenMux logo as an example)
+const LOGO_URL =
+  "https://cdn.marmot-cloud.com/storage/zenmux/2026/04/28/74mUf4t/Log-Light.png";
+const logoBytes = Buffer.from(await (await fetch(LOGO_URL)).arrayBuffer());
+const originalImage = {
+  imageBytes: logoBytes,
+  mimeType: "image/png",
+};
 
-// 基于生成的图片进行编辑
+// Edit the original image — restyle as paper-cut
 const editResponse = await client.models.editImage({
   model: "openai/gpt-image-2",
-  prompt: "Add a robot next to the cat",
+  prompt:
+    "Keep the exact same subject, silhouette and pose from the input image. " +
+    "Re-render it in Chinese paper-cut art style: traditional red color, " +
+    "intricate hollow patterns, plain white background. " +
+    "Do not change the subject or composition; only restyle it as paper-cut.",
   referenceImages: [
     new RawReferenceImage({
       referenceId: 1,
-      referenceImage: generateResponse.generatedImages[0].image,
+      referenceImage: originalImage,
     }),
   ],
 });
@@ -475,17 +520,17 @@ console.log(editResponse);
 
 :::
 
-#### 使用蒙版编辑图片
+#### Editing with a Mask
 
-通过蒙版（Mask）指定图片中需要编辑的区域,蒙版的透明区域即为编辑区域:
+Use a mask to specify which region of the image should be edited — the transparent areas of the mask define the editable region:
 
 ::: code-group
 
 ```Python [Python]
+import urllib.request
+
 from google import genai
 from google.genai import types
-from PIL import Image
-import io
 
 client = genai.Client(
     api_key="$ZENMUX_API_KEY",
@@ -496,9 +541,12 @@ client = genai.Client(
     ),
 )
 
-# 加载原图和蒙版
-original_image = types.Image.from_file("original.png")
-mask_image = types.Image.from_file("mask.png")  # 透明区域为需要编辑的部分
+# Load the original image and mask (using the ZenMux Logo as an example)
+LOGO_URL = "https://cdn.marmot-cloud.com/storage/zenmux/2026/04/28/74mUf4t/Log-Light.png"
+logo_bytes = urllib.request.urlopen(LOGO_URL).read()
+
+original_image = types.Image(image_bytes=logo_bytes, mime_type="image/png")
+mask_image = types.Image(image_bytes=logo_bytes, mime_type="image/png")  # Transparent areas are the editable region
 
 edit_response = client.models.edit_image(
     model="openai/gpt-image-2",
@@ -519,6 +567,12 @@ edit_response = client.models.edit_image(
     config=types.EditImageConfig(
         number_of_images=1,
         output_mime_type="image/png",
+        http_options=types.HttpOptions(
+            extra_body={
+                "imageSize": "1024x1024",
+                "quality": "high",
+            }
+        ),
     )
 )
 
@@ -527,7 +581,6 @@ for i, img in enumerate(edit_response.generated_images):
 ```
 
 ```ts [TypeScript]
-import * as fs from "fs";
 const { GoogleGenAI, RawReferenceImage, MaskReferenceImage } = require("@google/genai");
 
 const client = new GoogleGenAI({
@@ -539,13 +592,17 @@ const client = new GoogleGenAI({
   },
 });
 
-// 加载原图和蒙版
+// Load the original image and mask (using the ZenMux Logo as an example)
+const LOGO_URL =
+  "https://cdn.marmot-cloud.com/storage/zenmux/2026/04/28/74mUf4t/Log-Light.png";
+const logoBytes = Buffer.from(await (await fetch(LOGO_URL)).arrayBuffer());
+
 const originalImage = {
-  imageBytes: fs.readFileSync("original.png"),
+  imageBytes: logoBytes,
   mimeType: "image/png",
 };
 const maskImage = {
-  imageBytes: fs.readFileSync("mask.png"), // 透明区域为需要编辑的部分
+  imageBytes: logoBytes, // Transparent areas are the editable region
   mimeType: "image/png",
 };
 
@@ -568,6 +625,12 @@ const editResponse = await client.models.editImage({
   config: {
     numberOfImages: 1,
     outputMimeType: "image/png",
+    httpOptions: {
+      extraBody: {
+        imageSize: "1024x1024",
+        quality: "high",
+      },
+    },
   },
 });
 
@@ -576,35 +639,35 @@ console.log(editResponse);
 
 :::
 
-::: tip 💡 接口区别
+::: tip 💡 API Differences
 
-- **Google Gemini 模型**使用 `generate_content` 接口,需要指定 `response_modalities: ["TEXT", "IMAGE"]`,响应中同时包含文本和图片。
-- **非 Google 模型**使用 `generate_images` / `edit_image` 接口,直接返回图片对象,支持图片编辑功能。
+- **Google Gemini models** use the `generate_content` API with `response_modalities: ["TEXT", "IMAGE"]`; responses contain both text and images.
+- **Non-Google models** use the `generate_images` / `edit_image` APIs, which return image objects directly and support image editing.
   :::
 
-## 配置说明
+## Configuration
 
-### 必需参数
+### Required Parameters
 
-- **api_key**: 你的 ZenMux API 密钥
-- **vertexai**: 必须设置为 `true` 以启用 Vertex AI 协议
-- **base_url**: ZenMux Vertex AI 端点 `https://zenmux.ai/api/vertex-ai`
-- **responseModalities**: 响应模态,图片生成必须包含 `["TEXT", "IMAGE"]`
+- **api_key**: Your ZenMux API key
+- **vertexai**: Must be set to `true` to enable the Vertex AI protocol
+- **base_url**: ZenMux Vertex AI endpoint `https://zenmux.ai/api/vertex-ai`
+- **responseModalities**: Response modalities; image generation must include `["TEXT", "IMAGE"]`
 
-### 调用模式
+### Invocation Modes
 
-ZenMux 支持两种调用模式:
+ZenMux supports two invocation modes:
 
-- **流式调用** (`generate_content_stream` / `generateContentStream`): 适合需要实时反馈的场景
-- **非流式调用** (`generate_content` / `generateContent`): 等待完整响应后一次性返回
+- **Streaming** (`generate_content_stream` / `generateContentStream`): suitable for scenarios that need real-time feedback
+- **Non-streaming** (`generate_content` / `generateContent`): waits for the full response and returns it at once
 
-::: warning ⚠️ 响应处理
-图片生成模型的响应可能同时包含文本和图片。请遍历 `response.parts` 以处理所有内容部分。
+::: warning ⚠️ Response Handling
+Image generation models may return both text and images in the same response. Iterate over `response.parts` to handle every content part.
 :::
 
-## 最佳实践
+## Best Practices
 
-1. **提示词优化**: 使用清晰、具体的描述以获得更好的生成效果
-2. **错误处理**: 建议添加异常处理逻辑,处理 API 调用失败的情况
-3. **图片保存**: Python SDK 提供了便捷的 `as_image()` 方法将响应转换为 PIL Image 对象
-4. **模型选择**: 根据需求选择合适的模型,免费模型适合测试,付费模型提供更高质量
+1. **Prompt optimization**: use clear, specific descriptions for better generation results
+2. **Error handling**: add exception handling to gracefully handle API failures
+3. **Saving images**: the Python SDK provides a convenient `as_image()` method to convert the response into a PIL Image object
+4. **Model selection**: choose the right model for your needs — free models are good for testing, paid models offer higher quality

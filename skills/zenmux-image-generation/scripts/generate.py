@@ -255,21 +255,21 @@ def generate_openai_like(
 ) -> list[pathlib.Path]:
     """Call generate_images, or edit_image when reference images are present.
 
-    Note on the Python SDK quirks:
-      * `EditImageConfig` does *not* accept `image_size` — for edits the output
-        dimensions follow the reference image. We silently drop --size when
-        editing.
-      * Neither config exposes `quality` (per the ZenMux docs, that field is
-        only wired through the TypeScript SDK). We accept --quality on the CLI
-        for forward compatibility but the Python SDK ignores it. If --quality
-        was passed, we surface a one-line warning so the user knows.
+    `size` and `quality` are OpenAI-specific knobs that ZenMux exposes via
+    Vertex AI's `httpOptions.extraBody` passthrough — i.e.
+    `config.http_options.extra_body.{imageSize, quality}`. Both
+    `GenerateImagesConfig` and `EditImageConfig` route them the same way,
+    so we build a single `HttpOptions` once and inject it into whichever
+    config we end up using.
     """
+    extra_body: dict = {}
+    if size:
+        extra_body["imageSize"] = size
     if quality:
-        sys.stderr.write(
-            f"Note: --quality '{quality}' is recorded for the prompt metadata, "
-            f"but the google-genai Python SDK does not expose this field; "
-            f"ZenMux will use the model's default. (TypeScript SDK supports it.)\n"
-        )
+        extra_body["quality"] = quality
+    http_options = (
+        types.HttpOptions(extra_body=extra_body) if extra_body else None
+    )
 
     if reference_bytes:
         # --- edit_image path -------------------------------------------------
@@ -278,11 +278,8 @@ def generate_openai_like(
             edit_kwargs["output_mime_type"] = output_format
         if compression is not None:
             edit_kwargs["output_compression_quality"] = compression
-        if size:
-            sys.stderr.write(
-                f"Note: --size '{size}' is ignored for edit_image; output dimensions "
-                f"follow the first reference image.\n"
-            )
+        if http_options is not None:
+            edit_kwargs["http_options"] = http_options
 
         ref_images = []
         for idx, (data, mime) in enumerate(reference_bytes, start=1):
@@ -303,12 +300,12 @@ def generate_openai_like(
     else:
         # --- generate_images path -------------------------------------------
         gen_kwargs: dict = {"number_of_images": n}
-        if size:
-            gen_kwargs["image_size"] = size
         if output_format:
             gen_kwargs["output_mime_type"] = output_format
         if compression is not None:
             gen_kwargs["output_compression_quality"] = compression
+        if http_options is not None:
+            gen_kwargs["http_options"] = http_options
 
         gen_cfg = types.GenerateImagesConfig(**gen_kwargs)
         response = client.models.generate_images(
@@ -353,7 +350,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--size", default=None,
                    help="Image size, e.g. 1024x1024, 1536x1024, 1024x1536, or a custom WxH for gpt-image-2.")
     p.add_argument("--quality", default=None, choices=[None, "low", "medium", "high", "auto"],
-                   help="Quality preset (Python SDK ignores this for some models; passed via config.quality).")
+                   help="Quality preset (passed via config.http_options.extra_body.quality).")
     p.add_argument("--output-format", default=None,
                    choices=[None, "image/png", "image/jpeg", "image/webp"],
                    help="Output MIME type. Defaults to image/png.")
