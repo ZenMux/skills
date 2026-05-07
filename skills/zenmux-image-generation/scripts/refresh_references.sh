@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Refresh the external references bundled with this skill.
 #
-# Pulls the latest prompt cookbooks and ZenMux image-generation API guide into
-# references/. Run at the start of every skill invocation so the cookbook and
-# protocol guidance stay current.
+# Pulls the latest prompt cookbooks, ZenMux Gemini-protocol docs, and OpenAI
+# Python Images SDK markdown references into references/. Run at the start of
+# every skill invocation so the cookbook and protocol guidance stay current.
 #
 # Network failures are NOT fatal — the existing local copy is preserved and a
 # warning is printed, so the skill can still operate against stale data.
@@ -36,7 +36,9 @@ mkdir -p "$REFERENCES_DIR"
 declare -a sources=(
   "https://raw.githubusercontent.com/YouMind-OpenLab/awesome-gpt-image-2/main/README.md|awesome-gpt-image-2.md"
   "https://raw.githubusercontent.com/YouMind-OpenLab/awesome-nano-banana-pro-prompts/main/README.md|awesome-nano-banana-pro-prompts.md"
-  "https://raw.githubusercontent.com/ZenMux/zenmux-doc/main/docs_source/en/guide/advanced/image-generation.md|zenmux-image-api.md"
+  "https://raw.githubusercontent.com/ZenMux/zenmux-doc/main/docs_source/en/guide/advanced/image-generation.md|zenmux-image-generation.md"
+  "https://developers.openai.com/api/reference/python/resources/images/methods/generate/index.md|openai-python-images-generate.md"
+  "https://developers.openai.com/api/reference/python/resources/images/methods/edit/index.md|openai-python-images-edit.md"
 )
 
 failures=0

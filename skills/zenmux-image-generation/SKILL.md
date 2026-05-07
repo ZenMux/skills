@@ -1,8 +1,9 @@
 ---
 name: zenmux-image-generation
 description: >-
-  Generate or edit images through ZenMux image models such as openai/gpt-image-2,
-  Nano Banana Pro / Gemini 3 Pro Image, Nano Banana 2, Qwen Image, Doubao
+  Generate or edit images through ZenMux image models such as OpenAI
+  gpt-image-2 via the OpenAI Images API, Nano Banana Pro / Gemini 3 Pro Image,
+  Nano Banana 2, Qwen Image, Doubao
   Seedream, ERNIE-Image, GLM-Image, Hunyuan Image, KlingAI Kling, and future
   ZenMux image models. Use for text-to-image, image editing from references or
   URLs, photos, portraits, logos, product shots, posters, infographics, comics,
@@ -45,13 +46,18 @@ Before generating, make sure:
    uv sync --project skills/zenmux-image-generation
    ```
 
-   After that, run Python scripts through `uv run` so the managed environment
-   is reused instead of reinstalling packages each time:
+   After that, run protocol-specific Python scripts through `uv run` so the
+   managed environment is reused instead of reinstalling packages each time:
 
    ```bash
    uv run --project skills/zenmux-image-generation python \
-     skills/zenmux-image-generation/scripts/generate.py ...
+     skills/zenmux-image-generation/scripts/generate_openai.py ...
    ```
+
+   Use `scripts/generate_openai.py` for OpenAI Images protocol calls and
+   `scripts/generate_gemini.py` for Gemini / Vertex AI-compatible protocol
+   calls. There is intentionally no combined CLI; choose the script from the
+   protocol rules in Step 3.
 
    `uv` will create and maintain the skill-local virtual environment and use
    the dependency versions declared in `pyproject.toml`. Avoid plain
@@ -75,9 +81,13 @@ What it does:
 - Re-curls the two prompt cookbooks
   (`awesome-gpt-image-2.md`, `awesome-nano-banana-pro-prompts.md`) from the
   upstream `YouMind-OpenLab` GitHub repos via raw.githubusercontent.com.
-- Re-curls the ZenMux image-generation guide from
-  `ZenMux/zenmux-doc/docs_source/en/guide/advanced/image-generation.md` into
-  `references/zenmux-image-api.md`.
+- Re-curls the ZenMux Gemini-protocol image-generation doc from
+  `ZenMux/zenmux-doc` into `references/`:
+  - `zenmux-image-generation.md` — Gemini / Vertex AI-compatible image guide.
+- Re-curls the official OpenAI Python Images SDK markdown references from
+  `developers.openai.com`:
+  - `openai-python-images-generate.md` — `client.images.generate(...)`.
+  - `openai-python-images-edit.md` — `client.images.edit(...)`.
 - Writes each download to a tempfile first, then atomically renames into
   `references/` — partial responses can never corrupt the local copy.
 - On network failure or empty body, **keeps the previous local copy** and
@@ -101,6 +111,21 @@ to filter further.
 Skip the `list_models.sh` step (but **never** skip `refresh_references.sh`)
 if the user has already told you which model to use, or if they asked
 something so simple that the default (`openai/gpt-image-2`) clearly applies.
+
+After refreshing, treat these docs as the default protocol authority:
+
+- For OpenAI Images protocol calls, use `scripts/generate_openai.py` and the
+  OpenAI Python SDK references:
+  `references/openai-python-images-generate.md` and
+  `references/openai-python-images-edit.md`. Use their SDK method signatures,
+  but initialize the client with ZenMux's `base_url="https://zenmux.ai/api/v1"`
+  and `ZENMUX_API_KEY`.
+- For Gemini protocol calls, use `scripts/generate_gemini.py` and
+  `references/zenmux-image-generation.md`. ZenMux supports every image model
+  through this protocol; Google Gemini image models use `generate_content`,
+  while non-Google models use `generate_images` / `edit_image`.
+- Use the two `awesome-*` files only as prompt-writing inspiration, not as API
+  truth.
 
 ---
 
@@ -174,19 +199,32 @@ based on the task:
 If you suggest something other than the user's apparent intent, say so in one
 sentence so they can override.
 
+Protocol selection is model-family based, with one explicit override:
+
+- ZenMux currently supports two OpenAI image models:
+  `openai/gpt-image-2` and `openai/gpt-image-1.5` (also accepted by the helper
+  as bare `gpt-image-2` / `gpt-image-1.5`). These normally use
+  `scripts/generate_openai.py`, ZenMux's OpenAI Images protocol endpoint, and
+  the OpenAI SDK with `base_url="https://zenmux.ai/api/v1"`.
+- If the user explicitly says to call an OpenAI image model through Gemini
+  protocol, use `scripts/generate_gemini.py` with that OpenAI model ID.
+- Every non-OpenAI image model uses `scripts/generate_gemini.py` and the
+  Gemini / Vertex AI-compatible endpoint at `https://zenmux.ai/api/vertex-ai`.
+
 ### gpt-image-2 size constraints (only relevant for that model)
 
 When the user wants a custom size on `openai/gpt-image-2`, validate before
 saving the prompt:
 
 - Each edge must be a multiple of **16**
-- Maximum edge **< 3840px**
-- Long-edge / short-edge ratio **≤ 3:1**
+- Requested aspect ratio must stay between **1:3 and 3:1**
 - Total pixels in **[655,360, 8,294,400]**
-- Above `2560x1440` (≈ 3.69M pixels) is experimental — quality may vary
+- Maximum tested resolution is **3840x2160** or the same pixel count in another
+  valid aspect ratio.
+- Above `2560x1440` is experimental — quality may vary.
 
 If the user asks for a forbidden size (e.g. `4000x2000`), suggest the nearest
-valid size (`3840x2160` rounded down → `3824x2144`) and explain why.
+valid size and explain why.
 
 Other models accept only the preset sizes: `1024x1024`, `1024x1536`,
 `1536x1024`, `auto`.
@@ -202,7 +240,7 @@ the user actually wants:
 
 | Selected model | Cookbook to consult | Notes |
 |---|---|---|
-| `openai/gpt-image-*` | `references/awesome-gpt-image-2.md` | ~2700 prompts indexed by use case (avatar, social-media post, infographic, YouTube thumbnail, comic, product marketing, e-commerce main image, game asset, poster, app/web design) and style (photo, cinematic, anime, illustration, sketch, 3D render, isometric, pixel art, oil/watercolor/ink, retro, cyberpunk, minimalism). |
+| `openai/gpt-image-2` / `openai/gpt-image-1.5` | `references/awesome-gpt-image-2.md` | ~2700 prompts indexed by use case (avatar, social-media post, infographic, YouTube thumbnail, comic, product marketing, e-commerce main image, game asset, poster, app/web design) and style (photo, cinematic, anime, illustration, sketch, 3D render, isometric, pixel art, oil/watercolor/ink, retro, cyberpunk, minimalism). |
 | `google/gemini-*-image*` | `references/awesome-nano-banana-pro-prompts.md` | Equivalent cookbook curated for Nano Banana Pro / Nano Banana 2 — strong on multilingual text rendering, web-search-grounded visuals, character consistency, complex Bento/diagram layouts. |
 | Anything else (Qwen, Doubao, ERNIE, GLM, Hunyuan, Kling, ...) | Either cookbook | These models broadly respond to the same patterns; pick whichever has closer use-case coverage. |
 
@@ -325,7 +363,21 @@ Once the user confirms, run:
 
 ```bash
 uv run --project skills/zenmux-image-generation python \
-  skills/zenmux-image-generation/scripts/generate.py \
+  skills/zenmux-image-generation/scripts/generate_openai.py \
+  --model "<model>" \
+  --prompt-file "skills/zenmux-image-generation/prompts/<file>.md" \
+  --output-dir "skills/zenmux-image-generation/output" \
+  --n 4 \
+  --size "<size>" \
+  --quality "<quality>"
+```
+
+For non-OpenAI models, or when the user explicitly asks to use Gemini protocol
+for an OpenAI image model, use the Gemini / Vertex AI-compatible script:
+
+```bash
+uv run --project skills/zenmux-image-generation python \
+  skills/zenmux-image-generation/scripts/generate_gemini.py \
   --model "<model>" \
   --prompt-file "skills/zenmux-image-generation/prompts/<file>.md" \
   --output-dir "skills/zenmux-image-generation/output" \
@@ -341,7 +393,7 @@ URL — the script handles all of them. Example for a 2-image edit:
 
 ```bash
 uv run --project skills/zenmux-image-generation python \
-  skills/zenmux-image-generation/scripts/generate.py \
+  skills/zenmux-image-generation/scripts/generate_openai.py \
   --model "openai/gpt-image-2" \
   --prompt-file "skills/zenmux-image-generation/prompts/<file>.md" \
   --output-dir "skills/zenmux-image-generation/output" \
@@ -353,48 +405,74 @@ uv run --project skills/zenmux-image-generation python \
 Add `--output-format image/webp --compression 80` if the user asked for a
 smaller WebP output.
 
-The script automatically:
+For local masked edits, add `--mask-image "<mask.png>"` together with at least
+one `--reference-image`. OpenAI edits follow the official OpenAI Python SDK
+reference in `scripts/generate_openai.py` and use
+`client.images.edit(image=..., mask=...)`; local paths, remote URLs, and data
+URLs are loaded as SDK file parameters before upload. Non-OpenAI `edit_image`
+models are handled by `scripts/generate_gemini.py` and send masks as
+`MaskReferenceImage`. Gemini `generate_content` models do not support
+`--mask-image`.
 
-- Routes Google Gemini models to `generate_content` with
-  `response_modalities=["TEXT", "IMAGE"]`. Gemini returns one image per call,
-  so the script loops `n` times.
-- Routes everything else to `generate_images`, or to `edit_image` if reference
-  images are supplied.
-- Uses `vertexai=True` and `base_url="https://zenmux.ai/api/vertex-ai"` so the
-  call goes through ZenMux.
-- Strips the metadata header from the prompt file (everything before the first
-  `---`) before sending.
-- Saves outputs as `<model-slug>-<timestamp>-<NN>.<ext>` so successive runs
-  don't overwrite each other.
+The split scripts do the following:
+
+- `scripts/generate_openai.py` calls ZenMux's OpenAI Images API:
+  - no reference images → OpenAI SDK `client.images.generate`
+  - with reference images → OpenAI SDK `client.images.edit` with one or more
+    SDK file parameters, plus optional `mask`
+  - OpenAI-only options include `--background`, `--input-fidelity`,
+    `--moderation`, and `--user`. Other OpenAI Images options are intentionally
+    omitted until ZenMux exposes models that need them.
+- `scripts/generate_gemini.py` calls ZenMux's Gemini / Vertex AI-compatible
+  API and can be used with any image model when the protocol choice requires it:
+  - `google/*` image models → `generate_content` with
+    `response_modalities=["TEXT", "IMAGE"]`; Gemini returns one image per call,
+    so the script loops `n` times.
+  - All other image models, including OpenAI models when explicitly routed
+    through Gemini protocol → `generate_images`, or `edit_image` when reference
+    images are supplied.
+- Both protocol scripts use `ZENMUX_API_KEY`, strip the prompt metadata header
+  before sending, and save outputs as `<model-slug>-<timestamp>-<NN>.<ext>`.
 
 ### How `--size` and `--quality` reach the API
 
-ZenMux exposes `size` and `quality` as OpenAI-specific knobs that ride on
-Vertex AI's `httpOptions.extraBody` passthrough rather than as typed
-`GenerateImagesConfig` / `EditImageConfig` fields. The script wires them up
-the same way for both `generate_images` and `edit_image`:
+For `openai/*` models, `scripts/generate_openai.py` sends native OpenAI Images
+API fields through the OpenAI SDK:
+
+```python
+{
+    "model": model,
+    "prompt": prompt,
+    "n": n,
+    "size": size,                  # e.g. "1536x1024", "3840x2160"
+    "quality": quality,            # "low" | "medium" | "high" | "auto"
+    "output_format": "png",        # from --output-format image/png
+    "output_compression": 80,
+}
+```
+
+For non-OpenAI models that use Vertex AI-compatible `generate_images` or
+`edit_image`, `scripts/generate_gemini.py` sends `size` and `quality` through
+`config.http_options.extra_body`:
 
 ```python
 config=types.GenerateImagesConfig(   # or EditImageConfig
     number_of_images=n,
     http_options=types.HttpOptions(
         extra_body={
-            "imageSize": size,       # e.g. "1536x1024", "3840x2160"
-            "quality":   quality,    # "low" | "medium" | "high" | "auto"
+            "imageSize": size,
+            "quality": quality,
         },
     ),
 )
 ```
 
-This is the supported path in both Python and TypeScript SDKs (per the
-ZenMux docs), so `--quality` is honoured on the Python path *and* `--size`
-is honoured even on edits. No silent drops, no stderr warnings — what you
-pass on the CLI is what hits the API.
-
 If the call fails, read the error and decide:
 
 - **`google-genai` import error** → run `uv sync --project skills/zenmux-image-generation`,
   then retry with `uv run --project skills/zenmux-image-generation ...`.
+- **`openai` import error** → run `uv sync --project skills/zenmux-image-generation`,
+  then retry with `scripts/generate_openai.py`.
 - **Invalid size** → suggest the nearest valid size and ask whether to retry.
 - **Model not found / not authorized** → re-run `list_models.sh` to confirm the
   model id is current.
@@ -421,25 +499,26 @@ user along with a one-sentence note about what to look at. Example:
 
 If a follow-up edit comes in, treat it as a new run: re-optimize the prompt
 with explicit "preserve everything except X" invariants, save a new prompt
-file, confirm, then call `generate.py` with the previous output as a
-`--reference-image`. This is the iterative pattern the cookbooks consistently
-demonstrate.
+file, confirm, then call the protocol-specific script with the previous output
+as a `--reference-image`. This is the iterative pattern the cookbooks
+consistently demonstrate.
 
 ---
 
 ## Quick reference — which cookbook / which API path
 
 ```
-Model id starts with        Prompt cookbook to grep                            API path                          Quality knob
+Model id                    Prompt cookbook to grep                            API path                          Quality knob
 ─────────────────────────   ───────────────────────────────────────────────    ───────────────────────────────   ─────────────
-openai/gpt-image-*          references/awesome-gpt-image-2.md                  generate_images / edit_image      low|medium|high
-google/gemini-*-image*      references/awesome-nano-banana-pro-prompts.md      generate_content (TEXT+IMAGE)     n/a (per-model)
-qwen/qwen-image-*           either cookbook, by use-case fit                   generate_images / edit_image      low|medium|high
-bytedance/doubao-*          either cookbook, by use-case fit                   generate_images / edit_image      low|medium|high
-baidu/ernie-image-*         either cookbook, by use-case fit                   generate_images                   low|medium|high
-z-ai/glm-image              either cookbook, by use-case fit                   generate_images                   low|medium|high
-tencent/hunyuan-image*      either cookbook, by use-case fit                   generate_images / edit_image      low|medium|high
-klingai/kling-*             either cookbook, by use-case fit                   generate_images / edit_image      low|medium|high
+openai/gpt-image-2          references/awesome-gpt-image-2.md                  OpenAI Images API by default; Gemini only if explicitly requested      low|medium|high
+openai/gpt-image-1.5        references/awesome-gpt-image-2.md                  OpenAI Images API by default; Gemini only if explicitly requested      low|medium|high
+google/gemini-*-image*      references/awesome-nano-banana-pro-prompts.md      Gemini generate_content (TEXT+IMAGE)                                n/a (per-model)
+qwen/qwen-image-*           either cookbook, by use-case fit                   Gemini generate_images / edit_image                                  low|medium|high
+bytedance/doubao-*          either cookbook, by use-case fit                   Gemini generate_images / edit_image                                  low|medium|high
+baidu/ernie-image-*         either cookbook, by use-case fit                   Gemini generate_images                                                low|medium|high
+z-ai/glm-image              either cookbook, by use-case fit                   Gemini generate_images                                                low|medium|high
+tencent/hunyuan-image*      either cookbook, by use-case fit                   Gemini generate_images / edit_image                                  low|medium|high
+klingai/kling-*             either cookbook, by use-case fit                   Gemini generate_images / edit_image                                  low|medium|high
 ```
 
 The cookbooks are large (~5k lines each) and updated upstream periodically.
@@ -451,8 +530,7 @@ prompt set the user wants to try), re-run that script directly:
 bash skills/zenmux-image-generation/scripts/refresh_references.sh
 ```
 
-The full ZenMux API reference (parameter-level mapping between OpenAI image
-params and the Vertex AI SDK) lives at `references/zenmux-image-api.md` and is
-refreshed by `refresh_references.sh` from `ZenMux/zenmux-doc`. Read it when
-the user asks for an unusual parameter (mask, output compression, custom size
-validation, etc.).
+The full ZenMux image docs are refreshed by `refresh_references.sh` from
+`ZenMux/zenmux-doc`. Read the relevant local file when the user asks for an
+unusual parameter such as mask, output compression, custom size validation,
+streaming partial images, background, or moderation.
