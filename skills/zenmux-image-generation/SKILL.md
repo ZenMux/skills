@@ -37,24 +37,26 @@ Before generating, make sure:
 1. The user has `ZENMUX_API_KEY` exported in their shell (`export ZENMUX_API_KEY=...`).
    If not set, the script will fail and tell them so. Don't try to read it from
    anywhere else — that's intentional.
-2. The `google-genai` Python package is available. The skill ships with a
-   local virtualenv at `skills/zenmux-image-generation/.venv/` — use it for
-   every `python` invocation:
+2. Python dependencies are managed by `uv` from
+   `skills/zenmux-image-generation/pyproject.toml`. Install them once per
+   clone or after dependency changes:
 
    ```bash
-   skills/zenmux-image-generation/.venv/bin/python skills/zenmux-image-generation/scripts/generate.py ...
+   uv sync --project skills/zenmux-image-generation
    ```
 
-   If `.venv/` doesn't exist (fresh clone), create it once:
+   After that, run Python scripts through `uv run` so the managed environment
+   is reused instead of reinstalling packages each time:
 
    ```bash
-   python3 -m venv skills/zenmux-image-generation/.venv \
-     && skills/zenmux-image-generation/.venv/bin/pip install --quiet google-genai
+   uv run --project skills/zenmux-image-generation python \
+     skills/zenmux-image-generation/scripts/generate.py ...
    ```
 
-   On macOS with Homebrew's Python, plain `pip install` is blocked by PEP 668
-   — that's exactly why this skill uses a local venv instead of touching the
-   system Python.
+   `uv` will create and maintain the skill-local virtual environment and use
+   the dependency versions declared in `pyproject.toml`. Avoid plain
+   `pip install` for this skill; it is easy to drift from the checked-in
+   dependency declaration.
 
 ---
 
@@ -73,6 +75,9 @@ What it does:
 - Re-curls the two prompt cookbooks
   (`awesome-gpt-image-2.md`, `awesome-nano-banana-pro-prompts.md`) from the
   upstream `YouMind-OpenLab` GitHub repos via raw.githubusercontent.com.
+- Re-curls the ZenMux image-generation guide from
+  `ZenMux/zenmux-doc/docs_source/en/guide/advanced/image-generation.md` into
+  `references/zenmux-image-api.md`.
 - Writes each download to a tempfile first, then atomically renames into
   `references/` — partial responses can never corrupt the local copy.
 - On network failure or empty body, **keeps the previous local copy** and
@@ -319,7 +324,7 @@ unless the prompt fundamentally changes.
 Once the user confirms, run:
 
 ```bash
-skills/zenmux-image-generation/.venv/bin/python \
+uv run --project skills/zenmux-image-generation python \
   skills/zenmux-image-generation/scripts/generate.py \
   --model "<model>" \
   --prompt-file "skills/zenmux-image-generation/prompts/<file>.md" \
@@ -335,7 +340,7 @@ path (absolute, relative, or `~`-expanded), a `file://` URL, or an `http(s)://`
 URL — the script handles all of them. Example for a 2-image edit:
 
 ```bash
-skills/zenmux-image-generation/.venv/bin/python \
+uv run --project skills/zenmux-image-generation python \
   skills/zenmux-image-generation/scripts/generate.py \
   --model "openai/gpt-image-2" \
   --prompt-file "skills/zenmux-image-generation/prompts/<file>.md" \
@@ -388,7 +393,8 @@ pass on the CLI is what hits the API.
 
 If the call fails, read the error and decide:
 
-- **`google-genai` import error** → tell the user to `pip install google-genai`.
+- **`google-genai` import error** → run `uv sync --project skills/zenmux-image-generation`,
+  then retry with `uv run --project skills/zenmux-image-generation ...`.
 - **Invalid size** → suggest the nearest valid size and ask whether to retry.
 - **Model not found / not authorized** → re-run `list_models.sh` to confirm the
   model id is current.
@@ -446,6 +452,7 @@ bash skills/zenmux-image-generation/scripts/refresh_references.sh
 ```
 
 The full ZenMux API reference (parameter-level mapping between OpenAI image
-params and the Vertex AI SDK) lives at `references/zenmux-image-api.md`. Read
-it when the user asks for an unusual parameter (mask, output compression,
-custom size validation, etc.).
+params and the Vertex AI SDK) lives at `references/zenmux-image-api.md` and is
+refreshed by `refresh_references.sh` from `ZenMux/zenmux-doc`. Read it when
+the user asks for an unusual parameter (mask, output compression, custom size
+validation, etc.).

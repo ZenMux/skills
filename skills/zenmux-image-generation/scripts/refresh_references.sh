@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Refresh the prompt cookbooks bundled with this skill.
+# Refresh the external references bundled with this skill.
 #
-# Pulls the latest README.md from the upstream YouMind-OpenLab awesome repos
-# and writes them into references/. Run at the start of every skill
-# invocation so the cookbook content is current.
+# Pulls the latest prompt cookbooks and ZenMux image-generation API guide into
+# references/. Run at the start of every skill invocation so the cookbook and
+# protocol guidance stay current.
 #
 # Network failures are NOT fatal — the existing local copy is preserved and a
 # warning is printed, so the skill can still operate against stale data.
 #
 # Usage:
-#   bash scripts/refresh_references.sh           # refresh both cookbooks
+#   bash scripts/refresh_references.sh           # refresh all references
 #   bash scripts/refresh_references.sh --quiet   # only print on failure
 
 set -uo pipefail
@@ -32,17 +32,17 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REFERENCES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)/references"
 mkdir -p "$REFERENCES_DIR"
 
-# repo path => target filename
+# source URL => target filename
 declare -a sources=(
-  "YouMind-OpenLab/awesome-gpt-image-2|awesome-gpt-image-2.md"
-  "YouMind-OpenLab/awesome-nano-banana-pro-prompts|awesome-nano-banana-pro-prompts.md"
+  "https://raw.githubusercontent.com/YouMind-OpenLab/awesome-gpt-image-2/main/README.md|awesome-gpt-image-2.md"
+  "https://raw.githubusercontent.com/YouMind-OpenLab/awesome-nano-banana-pro-prompts/main/README.md|awesome-nano-banana-pro-prompts.md"
+  "https://raw.githubusercontent.com/ZenMux/zenmux-doc/main/docs_source/en/guide/advanced/image-generation.md|zenmux-image-api.md"
 )
 
 failures=0
 for entry in "${sources[@]}"; do
-  repo="${entry%%|*}"
+  url="${entry%%|*}"
   fname="${entry##*|}"
-  url="https://raw.githubusercontent.com/${repo}/main/README.md"
   target="$REFERENCES_DIR/$fname"
 
   # Download to a tempfile first so a partial response never overwrites the
@@ -73,7 +73,7 @@ for entry in "${sources[@]}"; do
 done
 
 # Exit 0 even on partial failure — the skill can still run against the local
-# copy. Only return non-zero if no cookbook is available at all.
+# copy. Only return non-zero if no reference is available at all.
 if [ "$failures" -eq "${#sources[@]}" ]; then
   # All refresh attempts failed; check whether any local copy exists.
   any_local=0

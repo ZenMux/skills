@@ -50,7 +50,11 @@ def _import_genai():
     except ImportError as exc:  # pragma: no cover - import-time guard
         sys.stderr.write(
             "Error: the `google-genai` package is required.\n"
-            "Install with:  pip install google-genai\n"
+            "Install this skill's dependencies once with:\n"
+            "  uv sync --project skills/zenmux-image-generation\n"
+            "Then run through uv:\n"
+            "  uv run --project skills/zenmux-image-generation python "
+            "skills/zenmux-image-generation/scripts/generate.py ...\n"
         )
         raise SystemExit(1) from exc
 
