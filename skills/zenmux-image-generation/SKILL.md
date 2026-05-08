@@ -36,8 +36,10 @@ differs.
 Before generating, make sure:
 
 1. The user has `ZENMUX_API_KEY` exported in their shell (`export ZENMUX_API_KEY=...`).
-   If not set, the script will fail and tell them so. Don't try to read it from
-   anywhere else — that's intentional.
+   The generation scripts check this environment variable first and stop with a
+   reminder if it is missing. The variable name is intentionally hardcoded in
+   the scripts; do not pass an API key or alternate key variable through CLI
+   arguments.
 2. Python dependencies are managed by `uv` from
    `skills/zenmux-image-generation/pyproject.toml`. Install them once per
    clone or after dependency changes:
@@ -433,6 +435,8 @@ The split scripts do the following:
     images are supplied.
 - Both protocol scripts use `ZENMUX_API_KEY`, strip the prompt metadata header
   before sending, and save outputs as `<model-slug>-<timestamp>-<NN>.<ext>`.
+  `ZENMUX_API_KEY` is read directly from the environment and cannot be
+  overridden with a CLI flag.
 
 ### How `--size` and `--quality` reach the API
 

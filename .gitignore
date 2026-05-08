@@ -7,3 +7,5 @@ skills/zenmux-image-generation/output/*
 !skills/zenmux-image-generation/output/.gitkeep
 skills/zenmux-image-generation/.venv/
 skills/zenmux-image-generation/scripts/__pycache__/
+skills/zenmux-image-generation/assets/*
+!skills/zenmux-image-generation/assets/.gitkeep

@@ -170,6 +170,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    api_key = require_api_key()
     if not is_openai_image_model(args.model):
         raise SystemExit(
             "Error: generate_openai.py only supports ZenMux's current OpenAI image models: "
@@ -183,7 +184,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.mask_image and not args.reference_image:
         raise SystemExit("Error: --mask-image requires at least one --reference-image.")
 
-    api_key = require_api_key(args.api_key_env)
     prompt = load_prompt(args.prompt_file)
     output_dir = ensure_output_dir(args.output_dir)
     run_ts = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")

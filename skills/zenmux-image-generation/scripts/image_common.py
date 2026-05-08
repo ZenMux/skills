@@ -21,6 +21,7 @@ OPENAI_IMAGE_MODELS = {
 }
 ZENMUX_BASE_URL = "https://zenmux.ai/api/vertex-ai"
 ZENMUX_OPENAI_BASE_URL = "https://zenmux.ai/api/v1"
+ZENMUX_API_KEY_ENV = "ZENMUX_API_KEY"
 
 
 def slugify(value: str, max_len: int = 40) -> str:
@@ -202,19 +203,15 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         help="Path, URL, or data URL to a reference image. Repeat for multiple references.",
     )
     parser.add_argument("--mask-image", default=None, help="Optional mask image path or URL for image edits.")
-    parser.add_argument(
-        "--api-key-env",
-        default="ZENMUX_API_KEY",
-        help="Environment variable holding the ZenMux API key.",
-    )
 
 
-def require_api_key(env_name: str) -> str:
-    api_key = os.environ.get(env_name)
+def require_api_key() -> str:
+    api_key = os.environ.get(ZENMUX_API_KEY_ENV)
     if not api_key:
         raise SystemExit(
-            f"Error: environment variable {env_name} is not set.\n"
-            f"Export your ZenMux API key:  export {env_name}=..."
+            f"Error: environment variable {ZENMUX_API_KEY_ENV} is not set.\n"
+            f"Please export your ZenMux API key first:\n"
+            f"  export {ZENMUX_API_KEY_ENV}=..."
         )
     return api_key
 
