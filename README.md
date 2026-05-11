@@ -17,6 +17,7 @@ npx skills add https://github.com/zenmux/skills --skill zenmux-usage
 npx skills add https://github.com/zenmux/skills --skill zenmux-feedback
 npx skills add https://github.com/zenmux/skills --skill zenmux-statusline
 npx skills add https://github.com/zenmux/skills --skill zenmux-image-generation
+npx skills add https://github.com/zenmux/skills --skill zenmux-codex-pets
 ```
 
 ## Available Skills
@@ -29,6 +30,21 @@ npx skills add https://github.com/zenmux/skills --skill zenmux-image-generation
 | **zenmux-feedback** | Submit GitHub issues, feature requests, bug reports, product suggestions, and feedback to ZenMux. Gathers info conversationally and submits via `gh` CLI. |
 | **zenmux-statusline** | Install a Claude Code status line that displays real-time ZenMux account info (subscription tier, 5h/7d quota usage, PAYG wallet balance, API key type) alongside session metrics (model, context usage, prompt cache hits). |
 | **zenmux-image-generation** | Generate images via ZenMux's image models (`openai/gpt-image-2`, Google Nano Banana Pro, Qwen Image, Doubao Seedream, ERNIE Image, GLM Image, Hunyuan Image, Kling, etc.). Picks an appropriate model, optimizes the prompt against that model's strengths (GPT Image 2 vs. Nano Banana guides), supports multi-image references via local paths or URLs (`[Image #N]` convention), saves the optimized prompt for review, and produces 4 variants by default. |
+| **zenmux-codex-pets** | Install bundled ZenMux Codex APP pets by copying the pet folders under `pets/` into `${CODEX_HOME:-$HOME/.codex}/pets`, then report which pets were installed. |
+
+## zenmux-codex-pets
+
+Install bundled ZenMux pets for Codex APP:
+
+```bash
+bash skills/zenmux-codex-pets/scripts/install-pets.sh
+```
+
+The installer copies every pet folder from `skills/zenmux-codex-pets/pets/` into `${CODEX_HOME:-$HOME/.codex}/pets` and prints the installed pet names. Current bundled pets:
+
+- `zenmux-padawan`
+
+You can also install manually by copying each folder under `skills/zenmux-codex-pets/pets/` into `~/.codex/pets`, then using the pets in Codex APP.
 
 ## zenmux-statusline
 
@@ -117,6 +133,14 @@ skills/                              # Skills directory
       zenmux-image-api.md
     prompts/                         # User-confirmed optimized prompts (git-ignored)
     output/                          # Generated images (git-ignored)
+  zenmux-codex-pets/                 # ZenMux Codex APP pets installer skill
+    SKILL.md                         # Skill definition
+    scripts/
+      install-pets.sh                # Copy bundled pets into ~/.codex/pets
+    pets/
+      zenmux-padawan/                # Bundled Codex APP pet
+        pet.json
+        spritesheet.webp
 ```
 
 ## Links
