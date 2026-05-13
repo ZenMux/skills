@@ -251,7 +251,7 @@ def main(argv: list[str] | None = None) -> int:
             run_ts=run_ts,
         )
 
-    print_saved(saved)
+    print_saved(saved, output_dir=output_dir)
     return 0
 
 

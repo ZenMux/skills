@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import json
 import os
 import pathlib
 import re
@@ -313,9 +314,29 @@ def validate_vertex_preset_size(size: str | None) -> None:
         raise SystemExit(f"Error: --size '{size}' is not supported for this protocol. Use one of: {allowed}.")
 
 
-def print_saved(saved: list[pathlib.Path]) -> None:
+def _common_output_dir(saved: list[pathlib.Path]) -> pathlib.Path:
+    try:
+        return pathlib.Path(os.path.commonpath([str(path.parent) for path in saved]))
+    except ValueError:
+        return saved[0].parent
+
+
+def print_saved(saved: list[pathlib.Path], *, output_dir: pathlib.Path | None = None) -> None:
     if not saved:
         raise SystemExit("Error: no images were saved.")
-    print(f"\nSaved {len(saved)} image(s):")
-    for path in saved:
+    resolved_paths = [path.expanduser().resolve() for path in saved]
+    resolved_output_dir = (output_dir.expanduser().resolve() if output_dir else _common_output_dir(resolved_paths))
+    result = {
+        "ok": True,
+        "status": "success",
+        "count": len(resolved_paths),
+        "output_dir": str(resolved_output_dir),
+        "image_paths": [str(path) for path in resolved_paths],
+    }
+
+    print(f"\nSUCCESS: generated and saved {len(resolved_paths)} image(s).")
+    print(f"OUTPUT_DIR: {resolved_output_dir}")
+    print("IMAGE_PATHS:")
+    for path in resolved_paths:
         print(f"  {path}")
+    print(f"RESULT_JSON: {json.dumps(result, ensure_ascii=False, separators=(',', ':'))}")

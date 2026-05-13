@@ -220,7 +220,7 @@ def main(argv: list[str] | None = None) -> int:
         moderation=args.moderation,
         user=args.user,
     )
-    print_saved(saved)
+    print_saved(saved, output_dir=output_dir)
     return 0
 
 

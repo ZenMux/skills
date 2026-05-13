@@ -442,6 +442,10 @@ The split scripts do the following:
   If `--output-dir` is omitted, outputs are saved into
   `skills/zenmux-image-generation/output`; an explicit `--output-dir` overrides
   that default.
+  On success, both scripts print stable completion lines for downstream agents:
+  `SUCCESS: ...`, `OUTPUT_DIR: <absolute-dir>`, an `IMAGE_PATHS:` block, and
+  a single-line `RESULT_JSON: {...}` payload containing `ok`, `status`,
+  `count`, `output_dir`, and `image_paths`.
   `ZENMUX_API_KEY` is read directly from the environment and cannot be
   overridden with a CLI flag.
 
@@ -497,8 +501,23 @@ If the call fails, read the error and decide:
 
 ## Step 7 — Report results
 
-When the script succeeds it prints the saved file paths. Surface those to the
-user along with a one-sentence note about what to look at. Example:
+When the script succeeds it prints the saved file paths and a machine-readable
+result line. Downstream agents should prefer parsing the line that starts with
+`RESULT_JSON:`; it is a compact JSON object with absolute paths:
+
+```text
+SUCCESS: generated and saved 4 image(s).
+OUTPUT_DIR: /absolute/path/to/skills/zenmux-image-generation/output
+IMAGE_PATHS:
+  /absolute/path/to/skills/zenmux-image-generation/output/openai-gpt-image-2-20260428-153512-01.png
+  /absolute/path/to/skills/zenmux-image-generation/output/openai-gpt-image-2-20260428-153512-02.png
+  /absolute/path/to/skills/zenmux-image-generation/output/openai-gpt-image-2-20260428-153512-03.png
+  /absolute/path/to/skills/zenmux-image-generation/output/openai-gpt-image-2-20260428-153512-04.png
+RESULT_JSON: {"ok":true,"status":"success","count":4,"output_dir":"/absolute/path/to/skills/zenmux-image-generation/output","image_paths":["/absolute/path/to/skills/zenmux-image-generation/output/openai-gpt-image-2-20260428-153512-01.png","/absolute/path/to/skills/zenmux-image-generation/output/openai-gpt-image-2-20260428-153512-02.png","/absolute/path/to/skills/zenmux-image-generation/output/openai-gpt-image-2-20260428-153512-03.png","/absolute/path/to/skills/zenmux-image-generation/output/openai-gpt-image-2-20260428-153512-04.png"]}
+```
+
+Surface the saved paths to the user along with a one-sentence note about what
+to look at. Example:
 
 > 已生成 4 张图片，保存在 `skills/zenmux-image-generation/output/`：
 > - `openai-gpt-image-2-20260428-153512-01.png`
