@@ -11,12 +11,14 @@ import sys
 import urllib.request
 
 from image_common import (
+    SKILL_DIR,
     ZENMUX_OPENAI_BASE_URL,
     ReferenceImage,
     add_common_args,
     ensure_output_dir,
     ext_from_mime,
     fetch_reference_image,
+    is_gpt_image_2,
     is_openai_image_model,
     load_prompt,
     make_filename,
@@ -25,6 +27,7 @@ from image_common import (
     print_saved,
     require_api_key,
     validate_compression,
+    validate_gpt_image_2_size,
     validate_n,
 )
 
@@ -37,7 +40,7 @@ def _import_openai():
         sys.stderr.write(
             "Error: the `openai` package is required for OpenAI image models.\n"
             "Install this skill's dependencies once with:\n"
-            "  uv sync --project skills/zenmux-image-generation\n"
+            f"  uv sync --project {SKILL_DIR}\n"
         )
         raise SystemExit(1) from exc
 
@@ -170,7 +173,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    api_key = require_api_key()
     if not is_openai_image_model(args.model):
         raise SystemExit(
             "Error: generate_openai.py only supports ZenMux's current OpenAI image models: "
@@ -179,11 +181,14 @@ def main(argv: list[str] | None = None) -> int:
         )
     validate_n(args.n)
     validate_compression(args.compression)
+    if is_gpt_image_2(args.model):
+        validate_gpt_image_2_size(args.size)
     if len(args.reference_image) > 16:
         raise SystemExit("Error: OpenAI GPT image edits accept at most 16 reference images.")
     if args.mask_image and not args.reference_image:
         raise SystemExit("Error: --mask-image requires at least one --reference-image.")
 
+    api_key = require_api_key()
     prompt = load_prompt(args.prompt_file)
     output_dir = ensure_output_dir(args.output_dir)
     run_ts = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")

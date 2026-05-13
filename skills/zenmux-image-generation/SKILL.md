@@ -19,11 +19,14 @@ description: >-
 You are a ZenMux image-generation assistant. Your job is to take a user's image
 request, pick a suitable ZenMux model, rewrite the prompt so it plays to that
 model's strengths, get the user's sign-off, then call the API and save the
-results into this skill's `output/` folder.
+results into this skill's `output/` folder by default.
 
 **Default behaviour:** if the user does not specify a model, use
 `openai/gpt-image-2`. Always generate 4 images per run unless the user
-explicitly asks for a different count.
+explicitly asks for a different count. The scripts default to
+`skills/zenmux-image-generation/output`, `1024x1024`, `medium`, and PNG; callers
+may still override these with `--output-dir`, `--size`, `--quality`, and
+`--output-format`.
 
 The skill folder is at `skills/zenmux-image-generation/`. All paths below are
 relative to that folder unless otherwise noted. Adjust if the repo layout
@@ -225,7 +228,7 @@ saving the prompt:
   valid aspect ratio.
 - Above `2560x1440` is experimental — quality may vary.
 
-If the user asks for a forbidden size (e.g. `4000x2000`), suggest the nearest
+If the user asks for a forbidden size (e.g. `4000x2400`), suggest the nearest
 valid size and explain why.
 
 Other models accept only the preset sizes: `1024x1024`, `1024x1536`,
@@ -368,7 +371,6 @@ uv run --project skills/zenmux-image-generation python \
   skills/zenmux-image-generation/scripts/generate_openai.py \
   --model "<model>" \
   --prompt-file "skills/zenmux-image-generation/prompts/<file>.md" \
-  --output-dir "skills/zenmux-image-generation/output" \
   --n 4 \
   --size "<size>" \
   --quality "<quality>"
@@ -382,11 +384,14 @@ uv run --project skills/zenmux-image-generation python \
   skills/zenmux-image-generation/scripts/generate_gemini.py \
   --model "<model>" \
   --prompt-file "skills/zenmux-image-generation/prompts/<file>.md" \
-  --output-dir "skills/zenmux-image-generation/output" \
   --n 4 \
   --size "<size>" \
   --quality "<quality>"
 ```
+
+`--output-dir` is intentionally omitted above. The scripts default to
+`skills/zenmux-image-generation/output`; pass `--output-dir "<dir>"` only when
+the user explicitly wants another folder or a named batch subdirectory.
 
 **With reference images**, repeat `--reference-image` once per image, in the
 same order as the `[Image #N]` tags in the prompt. Each value may be a local
@@ -398,7 +403,6 @@ uv run --project skills/zenmux-image-generation python \
   skills/zenmux-image-generation/scripts/generate_openai.py \
   --model "openai/gpt-image-2" \
   --prompt-file "skills/zenmux-image-generation/prompts/<file>.md" \
-  --output-dir "skills/zenmux-image-generation/output" \
   --n 4 --size "1024x1536" --quality "high" \
   --reference-image "/Users/me/Pictures/woman.png" \
   --reference-image "https://example.com/jacket.jpg"
@@ -435,6 +439,9 @@ The split scripts do the following:
     images are supplied.
 - Both protocol scripts use `ZENMUX_API_KEY`, strip the prompt metadata header
   before sending, and save outputs as `<model-slug>-<timestamp>-<NN>.<ext>`.
+  If `--output-dir` is omitted, outputs are saved into
+  `skills/zenmux-image-generation/output`; an explicit `--output-dir` overrides
+  that default.
   `ZENMUX_API_KEY` is read directly from the environment and cannot be
   overridden with a CLI flag.
 
