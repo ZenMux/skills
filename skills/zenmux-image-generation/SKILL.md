@@ -547,7 +547,7 @@ qwen/qwen-image-*           either cookbook, by use-case fit                   G
 bytedance/doubao-*          either cookbook, by use-case fit                   Gemini generate_images / edit_image                                  low|medium|high
 baidu/ernie-image-*         either cookbook, by use-case fit                   Gemini generate_images                                                low|medium|high
 z-ai/glm-image              either cookbook, by use-case fit                   Gemini generate_images                                                low|medium|high
-tencent/hunyuan-image*      either cookbook, by use-case fit                   Gemini generate_images / edit_image                                  low|medium|high
+tencent/hy-image*      either cookbook, by use-case fit                   Gemini generate_images / edit_image                                  low|medium|high
 klingai/kling-*             either cookbook, by use-case fit                   Gemini generate_images / edit_image                                  low|medium|high
 ```
 

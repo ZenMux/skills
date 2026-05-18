@@ -13,6 +13,7 @@ import argparse
 import datetime as _dt
 import pathlib
 import sys
+import urllib.request
 
 from image_common import (
     GEMINI_PREFIX,
@@ -171,13 +172,19 @@ def generate_images_or_edit_image(
     saved: list[pathlib.Path] = []
     for i, item in enumerate(images, start=1):
         img = item.image
+        raw_bytes = getattr(img, "image_bytes", None)
+        gcs_uri = getattr(img, "gcs_uri", None) or getattr(img, "uri", None)
         out_path = output_dir / make_filename(model, ext_from_mime(getattr(img, "mime_type", None)), i, run_ts)
-        if hasattr(img, "save") and callable(img.save):
-            img.save(str(out_path))
-        elif getattr(img, "image_bytes", None):
-            out_path.write_bytes(img.image_bytes)
+        if raw_bytes and len(raw_bytes) > 0:
+            out_path.write_bytes(raw_bytes)
+        elif gcs_uri:
+            try:
+                with urllib.request.urlopen(gcs_uri, timeout=300) as resp:
+                    out_path.write_bytes(resp.read())
+            except Exception as exc:
+                raise SystemExit(f"Error: failed to download image #{i} from URL: {exc}") from exc
         else:
-            raise SystemExit(f"Error: unable to extract bytes from image #{i}")
+            raise SystemExit(f"Error: image #{i} has no data (no bytes or URL)")
         saved.append(out_path)
     return saved
 
