@@ -18,6 +18,7 @@ npx skills add https://github.com/zenmux/skills --skill zenmux-feedback
 npx skills add https://github.com/zenmux/skills --skill zenmux-statusline
 npx skills add https://github.com/zenmux/skills --skill zenmux-image-generation
 npx skills add https://github.com/zenmux/skills --skill zenmux-codex-pets
+npx skills add https://github.com/zenmux/skills --skill morphe
 ```
 
 ## Available Skills
@@ -31,6 +32,7 @@ npx skills add https://github.com/zenmux/skills --skill zenmux-codex-pets
 | **zenmux-statusline** | Install a Claude Code status line that displays real-time ZenMux account info (subscription tier, 5h/7d quota usage, PAYG wallet balance, API key type) alongside session metrics (model, context usage, prompt cache hits). |
 | **zenmux-image-generation** | Generate images via ZenMux's image models (`openai/gpt-image-2`, Google Nano Banana Pro, Qwen Image, Doubao Seedream, ERNIE Image, GLM Image, Hunyuan Image, Kling, etc.). Picks an appropriate model, optimizes the prompt against that model's strengths (GPT Image 2 vs. Nano Banana guides), supports multi-image references via local paths or URLs (`[Image #N]` convention), saves the optimized prompt for review, and produces 4 variants by default. |
 | **zenmux-codex-pets** | Install bundled ZenMux Codex APP pets by copying the pet folders under `pets/` into `${CODEX_HOME:-$HOME/.codex}/pets`, then report which pets were installed. |
+| **morphe** | Deploy NextJS project into https://morphe.zenmux.app |
 
 ## zenmux-codex-pets
 
