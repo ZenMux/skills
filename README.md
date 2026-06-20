@@ -133,8 +133,9 @@ skills/                              # Skills directory
       awesome-gpt-image-2.md           # YouMind-OpenLab/awesome-gpt-image-2 README (~2700 prompts)
       awesome-nano-banana-pro-prompts.md  # YouMind-OpenLab/awesome-nano-banana-pro-prompts README
       zenmux-image-api.md
-    prompts/                         # User-confirmed optimized prompts (git-ignored)
     output/                          # Generated images (git-ignored)
+    # Optimized prompts are saved per-project under
+    # <project-dir>/.context/prompts/zenmux-image-generation/, not in the skill.
   zenmux-codex-pets/                 # ZenMux Codex APP pets installer skill
     SKILL.md                         # Skill definition
     scripts/
