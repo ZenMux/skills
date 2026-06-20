@@ -21,6 +21,14 @@ request, pick a suitable ZenMux model, rewrite the prompt so it plays to that
 model's strengths, get the user's sign-off, then call the API and save the
 results into this skill's `output/` folder by default.
 
+**Optimized prompts are saved into the user's project, not into the skill.**
+Each run's prompt file goes to
+`<project-dir>/.context/prompts/zenmux-image-generation/`, where `<project-dir>`
+is the current working directory (the user's project root). This keeps the
+prompt history alongside the project that requested the images. The directory is
+created automatically when you write the first prompt file (the Write tool makes
+parent directories).
+
 **Default behaviour:** if the user does not specify a model, use
 `openai/gpt-image-2`. Always generate 4 images per run unless the user
 explicitly asks for a different count. The scripts default to
@@ -323,11 +331,18 @@ Example prompt fragment for a 2-image edit:
 
 ## Step 5 — Save the optimized prompt and ask for confirmation
 
-Save the optimized prompt to:
+Save the optimized prompt under the **current project's** `.context` directory:
 
 ```
-skills/zenmux-image-generation/prompts/<YYYYMMDD-HHMMSS>-<short-slug>.md
+.context/prompts/zenmux-image-generation/<YYYYMMDD-HHMMSS>-<short-slug>.md
 ```
+
+This path is relative to the project directory (your current working
+directory) — **not** to the skill folder. For example, if the user is working
+in `/Users/me/myapp`, the prompt file lands at
+`/Users/me/myapp/.context/prompts/zenmux-image-generation/20260620-153512-poster.md`.
+Use the Write tool to create it; it makes the parent directories for you, so you
+don't need a separate `mkdir`.
 
 Use this exact format — the metadata header is for humans, the body after the
 `---` separator is what the script sends to the API:
@@ -370,7 +385,7 @@ Once the user confirms, run:
 uv run --project skills/zenmux-image-generation python \
   skills/zenmux-image-generation/scripts/generate_openai.py \
   --model "<model>" \
-  --prompt-file "skills/zenmux-image-generation/prompts/<file>.md" \
+  --prompt-file ".context/prompts/zenmux-image-generation/<file>.md" \
   --n 4 \
   --size "<size>" \
   --quality "<quality>"
@@ -383,7 +398,7 @@ for an OpenAI image model, use the Gemini / Vertex AI-compatible script:
 uv run --project skills/zenmux-image-generation python \
   skills/zenmux-image-generation/scripts/generate_gemini.py \
   --model "<model>" \
-  --prompt-file "skills/zenmux-image-generation/prompts/<file>.md" \
+  --prompt-file ".context/prompts/zenmux-image-generation/<file>.md" \
   --n 4 \
   --size "<size>" \
   --quality "<quality>"
@@ -402,7 +417,7 @@ URL — the script handles all of them. Example for a 2-image edit:
 uv run --project skills/zenmux-image-generation python \
   skills/zenmux-image-generation/scripts/generate_openai.py \
   --model "openai/gpt-image-2" \
-  --prompt-file "skills/zenmux-image-generation/prompts/<file>.md" \
+  --prompt-file ".context/prompts/zenmux-image-generation/<file>.md" \
   --n 4 --size "1024x1536" --quality "high" \
   --reference-image "/Users/me/Pictures/woman.png" \
   --reference-image "https://example.com/jacket.jpg"
